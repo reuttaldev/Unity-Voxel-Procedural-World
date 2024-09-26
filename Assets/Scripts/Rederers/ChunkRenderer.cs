@@ -51,7 +51,7 @@ public class ChunkRenderer : MonoBehaviour
                 int vertexInFaceIndex = EnvironmentConstants.voxelFaces[face, faceVertex];
                 Vector3 vertexInFace = EnvironmentConstants.voxelVertices[vertexInFaceIndex];
                 meshData.AddVertices(vertexInFace + relativePos);
-                meshData.AddUV(Vector2.zero);
+                meshData.AddUV(EnvironmentConstants.voxelUvs[faceVertex]);
                 meshData.AddTriangle();
             }
         }

@@ -10,6 +10,7 @@ public abstract class MeshData
     ///a list of indexes of the vertices array
     private ICollection<int> triangles;
     /// control which pixels on the texture correspond to which vertex on the 3D mesh
+    /// The vector 2 tells the position of the pixel on the image, and the index of the vector 2 in this uv array tells which index from the vetor list it will correspond (and be painted on)
     private ICollection<Vector2> uvs;
 
     public MeshData()
