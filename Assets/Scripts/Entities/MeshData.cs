@@ -1,42 +1,59 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 //https://docs.unity3d.com/ScriptReference/Mesh.html
-public class MeshData
+public abstract class MeshData
 {
-    public ICollection<Vector3> vertices { get; private set; }
-    // control which pixels on the texture correspond to which vertex on the 3D mesh
-    public List<Vector2> uvs { get; private set; }
-    public List<int> triangles { get; private set; }
+    private ICollection<Vector3> vertices;
+    ///a list of indexes of the vertices array
+    private ICollection<int> triangles;
+    /// control which pixels on the texture correspond to which vertex on the 3D mesh
+    private ICollection<Vector2> uvs;
 
-    public virtual void AddVertex(Vector3 v)
+    public MeshData()
+    {
+        vertices = new List<Vector3>();
+        triangles = new List<int>();    
+        uvs = new List<Vector2>();  
+    }
+    public virtual void Clear()
+    {
+        vertices.Clear();
+        uvs.Clear();
+        triangles.Clear();
+    }
+    public virtual void AddVertices(Vector3 v)
     {
         vertices.Add(v);
     }
 
-    // quad = two connected triangles, rendered only from one side 
-    public void AddQuads()
+    public virtual void AddTriangle()
     {
-        List<int> tempTriangle = new List<int>();
-        int verticesCount = vertices.Count;
-        for (int i = 0; i < 2; i++)
-        {
-            //starting from bottom left
-            triangles.Add(verticesCount - 4);
-            //moving in clockwise direction
-            for (int j = 1; j < 3; i++)
-            {
-                triangles.Add(verticesCount - 4+j+i);
-            }
-        }
-        triangles.AddRange(tempTriangle);
+        triangles.Add(vertices.Count-1);
     }
+    public virtual Mesh GenerateMeshFromData()
+    {
+        Mesh mesh = new Mesh();
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
+        mesh.RecalculateNormals();
+        return mesh;
+    }
+
+    internal void AddUV(Vector2 uv)
+    {
+        uvs.Add(uv);
+    }
+}
+
+public class CollisionMesh: MeshData
+{
+
 }
 public class WaterMesh: MeshData
 {
     Mesh.MeshData waterMesh;
-    public override void AddVertex(Vector3 v)
-    {
-        vertices.Add(v);
-    }
 }
