@@ -12,6 +12,7 @@ public abstract class MeshData
     /// control which pixels on the texture correspond to which vertex on the 3D mesh
     /// The vector 2 tells the position of the pixel on the image, and the index of the vector 2 in this uv array tells which index from the vetor list it will correspond (and be painted on)
     private ICollection<Vector2> uvs;
+    public int VerticesCount => vertices.Count;
 
     public MeshData()
     {
@@ -30,9 +31,9 @@ public abstract class MeshData
         vertices.Add(v);
     }
 
-    public virtual void AddTriangle()
+    public virtual void AddTrianglePoint(int i)
     {
-        triangles.Add(vertices.Count-1);
+        triangles.Add(i);
     }
     public virtual Mesh GenerateMeshFromData()
     {

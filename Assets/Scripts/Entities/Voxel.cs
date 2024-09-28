@@ -6,17 +6,16 @@ using UnityEngine;
 [Serializable]
 public enum VoxelType
 {
-    Empty,
+    Dirt,
     Water,
     Sand,
-    Dirt,
     Dark_Grass,
     Light_Grass,
     Dark_Gravel,
     Light_Gravel,
     Stone,
     Tree,
-    Sky
+    Empty,
 }
 
 [CreateAssetMenu(fileName = "Voxel", menuName ="Scriptable Objects/Voxel")]

@@ -11,12 +11,11 @@ using static UnityEngine.Mesh;
 [RequireComponent(typeof(MeshFilter))]
 // the mesh renderer takes the geometry from the mesh filter and renders it at the position defined by the transform 
 [RequireComponent(typeof(MeshRenderer))]
-[RequireComponent(typeof(Chunk))]
 /// This class is in charge of combining a group of voxels into one mesh that will be rendered optimally (only the outer faces of the cubes will be created, not the ones that are overlapping).
 public class ChunkRenderer : MonoBehaviour
 {
     // the chunk from which we will generate the mesh data 
-    private Chunk chunk; 
+    private ChunkData chunk; 
     private MeshCollider meshCollider;
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
@@ -32,39 +31,54 @@ public class ChunkRenderer : MonoBehaviour
         meshCollider = GetComponent<MeshCollider>();
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
-        chunk = GetComponent<Chunk>();
         meshData = new CollisionMesh();
     }
 
-    private void Start()
+     /// check if there is a voxel against that face. If so, we do not need to draw it 
+    /// has face = return true
+    private bool CheckVoxelNeighbors(Vector3Int relativePos, int faceIndex)
     {
-        Render();
+        Vector3Int posToCheck = relativePos + EnvironmentConstants.faceChecks[faceIndex];
+        // if (chunk.ValidCoordinates(posToCheck))
+        //{
+        //    return;
+        //}
+        return false;
     }
 
-    private void GenerateVoxelMeshData(Voxel voxel, Vector3Int relativePos)
+    private void GenerateVoxelMeshData(VoxelType voxel, Vector3Int relativePos)
     {
         // for each face, add the needed vertices
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
-            for (int faceVertex = 0; faceVertex < EnvironmentConstants.voxelFaces.GetLength(1); faceVertex++)
+            if (CheckVoxelNeighbors(relativePos, face))
+                continue;
+            for (int faceVertex = 0; faceVertex < EnvironmentConstants.vertexNoDupCount; faceVertex++)
             {
                 int vertexInFaceIndex = EnvironmentConstants.voxelFaces[face, faceVertex];
                 Vector3 vertexInFace = EnvironmentConstants.voxelVertices[vertexInFaceIndex];
                 meshData.AddVertices(vertexInFace + relativePos);
                 meshData.AddUV(EnvironmentConstants.voxelUvs[faceVertex]);
-                meshData.AddTriangle();
             }
+            // need to add 6 triangle points, but we added only 4 vertices for each face(bc 2 out of the 6 are duplicates)
+            // so add the triangles outside the loop 
+            int addedVertInLoop = EnvironmentConstants.vertexNoDupCount;
+            // add the triangles s.t all the verticies we added in the loop are there in the adding order, including the duplicates that are not in the constants list 
+            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop);
+            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 1);
+            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 2);
+            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 2);
+            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 1);
+            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 3);
         }
     }
     private void GenerateChunkMeshData()
     {
         meshData.Clear();
-
-        GenerateVoxelMeshData(chunk.voxels[0], Vector3Int.zero);
-        //foreach (var voxel in chunk.voxels)
-        //{
-        //    GenerateVoxelMeshData(voxel);
-        //}
+        foreach (var kvp in chunk.Voxels)
+        {
+            GenerateVoxelMeshData(kvp.Value,kvp.Key);
+        }
     }
 
     /// <summary>
@@ -75,8 +89,9 @@ public class ChunkRenderer : MonoBehaviour
         meshFilter.mesh = meshData.GenerateMeshFromData();
     }
 
-    private void Render()
+    public void Render(ChunkData chunkData)
     {
+        chunk = chunkData;
         GenerateChunkMeshData();
         UploadMesh();
     }
@@ -86,10 +101,10 @@ public class ChunkRenderer : MonoBehaviour
     {
         if (showGizmos && Application.isPlaying && chunk != null)
         {
-            /*
+            
             Gizmos.color = (Selection.activeObject == gameObject) ? new Color(0, 1, 0, 0.4f): new Color(1, 0, 1, 0.4f);
             Vector3 half = new Vector3(EnvironmentConstants.chunkWidth / 2f, EnvironmentConstants.chunkDepth / 2f, EnvironmentConstants.chunkHeight / 2f);
-            Gizmos.DrawCube(transform.position + half, half * 2);*/
+            Gizmos.DrawCube(transform.position + half, half * 2);
         }
     }
 #endif
