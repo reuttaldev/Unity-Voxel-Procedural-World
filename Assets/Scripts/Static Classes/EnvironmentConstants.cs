@@ -24,9 +24,10 @@ public static class EnvironmentConstants
        };
 
     /// <summary>
-    ///   Each int here corresponds is an index of a vertex from the list above
-    ///   Each element here creates two connected triangles = face (rendered only from one side), by creating lines between the corresponding vertices 
+    ///  Each int here corresponds is an index of a vertex from the list above
+    ///  Each element here creates two connected triangles = face (rendered only from one side), by creating lines between the corresponding vertices 
     ///  The faces are crated by starting from bottom left vertex, and moving in anti- clockwise direction
+    /// I could use a dictionary with keys representing the direction of each face, I avoid it in order to minimize overhead during iteration.
     /// </summary>
     public static readonly int[,] voxelFaces = new int[facesCount, vertexNoDupCount] {
 
@@ -39,32 +40,24 @@ public static class EnvironmentConstants
 		{1, 2, 5, 6} // Right Face
 
 	};
-    /// <summary>
-    /// Using the same steps as we are building the triangles to build the textures, starting from bottom left and moving clockwise. 
-    /// </summary>
-    public static readonly Vector2[] voxelUvs = new Vector2[vertexNoDupCount] 
-    {
-
-        // bottom left
-        new Vector2 (0.0f, 0.0f),
-        new Vector2 (0.0f, 1.0f),
-        new Vector2 (1.0f, 0.0f),
-        // top right
-        new Vector2 (1.0f, 1.0f)
-
-    };
 
     public static readonly Vector3Int[] faceChecks = new Vector3Int[facesCount] 
     {
-
-        new Vector3Int(0, 0, -1),
+        // forward 
         new Vector3Int(0, 0, 1),
-        new Vector3Int(0, 1, 0),
-        new Vector3Int(0, -1, 0),
+        // backwards
+        new Vector3Int(0, 0, -1),
+        // right
+        new Vector3Int(1, 0, 0),
+        // left 
         new Vector3Int(-1, 0, 0),
-        new Vector3Int(1, 0, 0)
+        // up
+        new Vector3Int(0, 1, 0),
+        // down
+        new Vector3Int(0, -1, 0),
 
     };
+
 
 
 }

@@ -2,10 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnvironmentController : MonoBehaviour
+public class EnvironmentController : MonoBehaviour, IRegistrableService
 {
     [SerializeField]
     private GameObject chunkPrefab;
+    [SerializeField]
+    VoxelsData voxelsData;
+    private void Awake()
+    {
+        ServiceLocator.Instance.Register<EnvironmentController>(this);
+    }
 
     private void Start()
     {
