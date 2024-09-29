@@ -99,10 +99,9 @@ public class Chunk : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {
-        if (showGizmos && Application.isPlaying)
+        if (showGizmos && Application.isPlaying && Selection.activeObject == gameObject)
         {
-
-            Gizmos.color = (Selection.activeObject == gameObject) ? new Color(0, 1, 0, 0.4f) : new Color(1, 0, 1, 0.4f);
+            Gizmos.color = new Color(1, 0, 1, 0.4f);
             Vector3 half = new Vector3(EnvironmentConstants.chunkWidth / 2f, EnvironmentConstants.chunkDepth / 2f, EnvironmentConstants.chunkHeight / 2f);
             Gizmos.DrawCube(transform.position + half, half * 2);
         }

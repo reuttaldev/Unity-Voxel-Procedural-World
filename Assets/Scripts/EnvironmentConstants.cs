@@ -6,9 +6,12 @@ public static class EnvironmentConstants
 {
     public const int facesCount= 6;
     public const int vertexNoDupCount= 4;
-    // x, y, z 
+    // x, z, y
     public const int chunkWidth = 10, chunkDepth=10, chunkHeight=10;
+    public const int worldSizeInChunks = 1;
     public static readonly int chunkSize = chunkWidth * chunkDepth * chunkHeight;
+    public const int waterThreshold = 60;
+    public const float noiseScale = 0.035f;
 
     // voxel = cube in this context. These are the cube vertices
     public static readonly Vector3[] voxelVertices = new Vector3[8]

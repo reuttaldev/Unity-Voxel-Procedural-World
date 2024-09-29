@@ -6,7 +6,7 @@ using UnityEngine;
 /// This class is responsible for the calculations needed before applying textures (i.e., images) to the mesh 
 /// created for each vertex, so the environment appears textured rather than just white cubes.
 /// </summary>
-public static class TextureController 
+public static class TextureUtility 
 {
     /// <summary>
     /// Each texture contains textures for both the top and sides of a cube.
@@ -31,7 +31,7 @@ public static class TextureController
     /// This defines which part of the texture is mapped to each vertex.
     /// </summary>
     private static Vector2[][] voxelUvs;
-    static TextureController()
+    static TextureUtility()
     {
         // each element in this array represents the texture coordinates for a single face of the voxel. 
         // this works only for an image with a single texture in it. 
@@ -108,4 +108,5 @@ public static class TextureController
         }
         return coordinates;
     }
+
 }

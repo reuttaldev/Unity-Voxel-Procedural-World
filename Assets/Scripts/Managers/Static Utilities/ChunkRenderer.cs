@@ -34,9 +34,8 @@ public static class ChunkRenderer
             // so add the triangles outside the loop 
             // add the triangles s.t all the verticies we added in the loop are there in the adding order, including the duplicates that are not in the constants list 
             meshData.AddTriangles();
-
             int textureIndex = ServiceLocator.Instance.Get<EnvironmentController>().voxelsData.data[(int)voxel].TexturePosition;
-            meshData.AddUV(TextureController.GetUvs(face, textureIndex));
+            meshData.AddUV(TextureUtility.GetUvs(face, textureIndex));
         }
     }
     private static MeshData GenerateChunkMeshData(Chunk chunk)
@@ -44,7 +43,8 @@ public static class ChunkRenderer
         MeshData meshData = new CollisionMesh(); 
         foreach (var kvp in chunk.Voxels)
         {
-            GenerateVoxelMeshData(kvp.Value, kvp.Key, meshData);
+            if(kvp.Value != VoxelType.Empty)
+                GenerateVoxelMeshData(kvp.Value, kvp.Key, meshData);
         }
         return meshData;
     }
