@@ -8,16 +8,11 @@ using UnityEngine;
 public enum VoxelType: byte
 {
     Grass,
-    Mix,
-    Dirt,
+    Grass_Mix,
+    Light_Sand,
+    Dark_Sand,
+    Sand_Mix,
     Water,
-    Sand,
-    Dark_Grass,
-    Light_Grass,
-    Dark_Gravel,
-    Light_Gravel,
-    Stone,
-    Tree,
     Empty
 }
 
@@ -31,9 +26,10 @@ public struct Voxel
     [SerializeField]
     private VoxelType type;
     [SerializeField]
-    private Material[] materials;
-    /// choose a random material 
-    public Material GetMaterial => materials[UnityEngine.Random.Range(0, materials.Length)];
+    /// The texture file contains the textures for all voxel types, stacked vertically. This marks how many other textures are stacked underneath it. 
+    private int[] texturePosition;
+    /// choose a random texture  
+    public int TexturePosition => texturePosition[UnityEngine.Random.Range(0, texturePosition.Length)];
     [SerializeField]
     private bool generateCollision;
     public bool GenerateCollision => generateCollision;
@@ -45,6 +41,6 @@ public class VoxelsData : ScriptableObject
 {
     [SerializeField]
     /// ordered by the VoxelType:: byte 
-    private List<Voxel> voxelData; 
+    public List<Voxel> data; 
 
 }

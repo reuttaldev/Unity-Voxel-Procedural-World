@@ -3,34 +3,71 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// This class is responsible for applying textures (i.e., images) to the mesh 
+/// This class is responsible for the calculations needed before applying textures (i.e., images) to the mesh 
 /// created for each vertex, so the environment appears textured rather than just white cubes.
 /// </summary>
 public static class TextureController 
 {
     /// <summary>
-    /// Each texture file (PNG) contains textures for both the top and sides of a cube.
+    /// Each texture contains textures for both the top and sides of a cube.
     /// This value represents the size of a single texture within that file.
     /// </summary>
     private const int textureBlockPixelSize = 164;
-    /// size of the entire image texture
-    private const int texturePixelSize = 512;
-    private static readonly float normalizedBlockSize = textureBlockPixelSize / texturePixelSize;
+    /// The image file (atlas) contains all the textures for the various voxel types. This is the size of a texture for one voxel
+    private const int texturePixelSizeX = 492;
+    private const int texturePixelSizeY = 328;
+    /// size of the entire image (atlas)
+    private const int imagePixelSizeX = 492;
+    private const int imagePixelSizeY = 2623;
+
+    private static readonly float normalizedTextureSizeY = (float)texturePixelSizeY / imagePixelSizeY;
+    private static readonly float normalizedBlockSizeX = (float)textureBlockPixelSize / imagePixelSizeX;
+    private static readonly float normalizedBlockSizeY = (float)textureBlockPixelSize / imagePixelSizeY;
 
     /// <summary>
     /// Each element in the UV list is a Vector2 representing the texture coordinate 
     /// for the corresponding vertex at the same index in the vertices list.
+    /// Each face uses a set of 4 coordinates corresponding to the vertices in the face.
     /// This defines which part of the texture is mapped to each vertex.
     /// </summary>
-    public static readonly Vector2[][] vortexUVs = new Vector2[EnvironmentConstants.facesCount][];
+    private static Vector2[][] voxelUvs;
     static TextureController()
     {
-        vortexUVs[0] = GetNormalizedCoordinates(2, 1); // Back Face
-        vortexUVs[1] = GetNormalizedCoordinates(0,0); // Front Face
-        vortexUVs[2] = GetNormalizedCoordinates(1, 1); // Top Face
-        vortexUVs[3] = GetNormalizedCoordinates(0, 1); // Bottom Face
-        vortexUVs[4] = GetNormalizedCoordinates(2, 0); // Left Face
-        vortexUVs[5] = GetNormalizedCoordinates(1, 0); // Right Face
+        // each element in this array represents the texture coordinates for a single face of the voxel. 
+        // this works only for an image with a single texture in it. 
+        voxelUvs = new Vector2[EnvironmentConstants.facesCount][];
+        voxelUvs[0] = GetNormalizedCoordinates(2, 1); // Back Face
+        voxelUvs[1] = GetNormalizedCoordinates(0,0); // Front Face
+        voxelUvs[2] = GetNormalizedCoordinates(1, 1); // Top Face
+        voxelUvs[3] = GetNormalizedCoordinates(0, 1); // Bottom Face
+        voxelUvs[4] = GetNormalizedCoordinates(2, 0); // Left Face
+        voxelUvs[5] = GetNormalizedCoordinates(1, 0); // Right Face
+
+       /* int textureCount = imagePixelSizeY / texturePixelSizeY;
+        voxelUvsByType = new Vector2[textureCount][];
+        for (int typeIndex = 0; typeIndex < textureCount; typeIndex++)
+        {
+            voxelUvsByType[typeIndex] = new Vector2[EnvironmentConstants.facesCount];
+            for (int faceIndex = 0; faceIndex < EnvironmentConstants.facesCount; faceIndex++)
+            {
+                /// The UV coordinates are adjusted by adding a vertical offset to account for the position of each texture within the image.
+                voxelUvsByType[faceIndex] = voxelUvs[faceIndex] + normalizedTextureSizeY * typeIndex;
+            }
+        }*/
+    }
+
+    /// Handle a texture atlas, where multiple textures are stacked vertically in a single image.
+    public static Vector2[] GetUvs(int faceIndex, int textureIndex)
+    {
+        Vector2[] modifiedArray = new Vector2[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            Vector2 v = voxelUvs[faceIndex][i];
+            /// The UV coordinates are adjusted by adding a vertical offset to account for the position of each texture within the image.
+            modifiedArray[i] = new Vector2(v.x, v.y + (textureIndex)* normalizedTextureSizeY );
+        }
+        return modifiedArray;
     }
 
     /// <summary>
@@ -39,16 +76,15 @@ public static class TextureController
     /// </summary>
     private static readonly Vector2[] BlockVerticesOffset = new Vector2[EnvironmentConstants.vertexNoDupCount]
     {
-
         // bottom left conrner
         new Vector2 (0, 0),
-        new Vector2 (0, normalizedBlockSize),
-        new Vector2 (normalizedBlockSize, 0),
+        new Vector2 (0, normalizedBlockSizeY),
+        new Vector2 (normalizedBlockSizeX, 0),
         // top right corner
-        new Vector2 (normalizedBlockSize,normalizedBlockSize)
+        new Vector2 (normalizedBlockSizeX,normalizedBlockSizeY)
 
     };
-
+    
     /// <summary>
     /// Retrieves the normalized coordinate of the START of the block based on its position within the texture.
     /// Normalized coordinates represent the block's position relative to the entire texture size, ranging from 0 to 1.
@@ -56,7 +92,7 @@ public static class TextureController
     /// </summary>
     private static Vector2 GetBlockStartCoordinate(int blockIndexX, int blockIndexY)
     {
-        return new Vector2(blockIndexX * normalizedBlockSize, blockIndexY * normalizedBlockSize);
+        return new Vector2(blockIndexX * normalizedBlockSizeX, blockIndexY * normalizedBlockSizeY);
     }
 
     /// Get the normalized coordinates for the entire face (all 4 vertices)

@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using static UnityEngine.Mesh;
 
 //https://docs.unity3d.com/ScriptReference/Mesh.html
 public abstract class MeshData
 {
-    private ICollection<Vector3> vertices;
+    public ICollection<Vector3> vertices;
     ///a list of indexes of the vertices array
     private ICollection<int> triangles;
     /// control which pixels on the texture correspond to which vertex on the 3D mesh
     /// The vector 2 tells the position of the pixel on the image, and the index of the vector 2 in this uv array tells which index from the vetor list it will correspond (and be painted on)
-    private ICollection<Vector2> uvs;
-    public int VerticesCount => vertices.Count;
-
+    public List<Vector2> uvs;
     public MeshData()
     {
         vertices = new List<Vector3>();
@@ -31,9 +32,16 @@ public abstract class MeshData
         vertices.Add(v);
     }
 
-    public virtual void AddTrianglePoint(int i)
+    /// add the triangles s.t all the verticies we added in the loop are there in the adding order, including the duplicates that are not in the constants list 
+    public virtual void AddTriangles()
     {
-        triangles.Add(i);
+        int verticesCount = vertices.Count;
+        triangles.Add(verticesCount - EnvironmentConstants.vertexNoDupCount);
+        triangles.Add(verticesCount - EnvironmentConstants.vertexNoDupCount + 1);
+        triangles.Add(verticesCount - EnvironmentConstants.vertexNoDupCount + 2);
+        triangles.Add(verticesCount - EnvironmentConstants.vertexNoDupCount + 2);
+        triangles.Add(verticesCount - EnvironmentConstants.vertexNoDupCount + 1);
+        triangles.Add(verticesCount - EnvironmentConstants.vertexNoDupCount + 3);
     }
     public virtual Mesh GenerateMeshFromData()
     {
@@ -45,9 +53,9 @@ public abstract class MeshData
         return mesh;
     }
 
-    internal void AddUV(Vector2 uv)
+    internal void AddUV(Vector2[] a)
     {
-        uvs.Add(uv);
+        uvs.AddRange(a);
     }
 }
 

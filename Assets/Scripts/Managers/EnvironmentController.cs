@@ -7,7 +7,7 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
     [SerializeField]
     private GameObject chunkPrefab;
     [SerializeField]
-    VoxelsData voxelsData;
+    public VoxelsData voxelsData;
     private void Awake()
     {
         ServiceLocator.Instance.Register<EnvironmentController>(this);
@@ -16,8 +16,17 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
     private void Start()
     {
         CreateFullChunk();
+        //CreateOneVoxelChunk();
     }
 
+    private void CreateOneVoxelChunk()
+    {
+        ChunkData chunk = new ChunkData();
+        chunk[0,0,0] = VoxelType.Dark_Sand;
+        var chunkGO = Instantiate(chunkPrefab);
+        var chunkRenderer = chunkGO.GetComponent<ChunkRenderer>();
+        chunkRenderer.Render(chunk);
+    }
     private void CreateFullChunk()
     {
         ChunkData chunk = new ChunkData();
@@ -27,7 +36,7 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
             {
                 for(int z = 0; z < EnvironmentConstants.chunkHeight; z++)
                 {
-                    chunk[x,y,z] = VoxelType.Dirt;
+                    chunk[x,y,z] = VoxelType.Grass;
                 }
             }
         }

@@ -23,7 +23,7 @@ public class ChunkRenderer : MonoBehaviour
     int index = 0;
 #if UNITY_EDITOR
     [SerializeField]
-    bool showGizmos=true;
+    bool showGizmos=false;
 #endif
 
     private void Awake()
@@ -58,18 +58,14 @@ public class ChunkRenderer : MonoBehaviour
                 int vertexInFaceIndex = EnvironmentConstants.voxelFaces[face, faceVertex];
                 Vector3 vertexInFace = EnvironmentConstants.voxelVertices[vertexInFaceIndex];
                 meshData.AddVertices(vertexInFace + relativePos);
-                meshData.AddUV(EnvironmentConstants.voxelUvs[faceVertex]);
             }
             // need to add 6 triangle points, but we added only 4 vertices for each face(bc 2 out of the 6 are duplicates)
             // so add the triangles outside the loop 
-            int addedVertInLoop = EnvironmentConstants.vertexNoDupCount;
             // add the triangles s.t all the verticies we added in the loop are there in the adding order, including the duplicates that are not in the constants list 
-            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop);
-            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 1);
-            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 2);
-            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 2);
-            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 1);
-            meshData.AddTrianglePoint(meshData.VerticesCount - addedVertInLoop + 3);
+            meshData.AddTriangles();
+
+            int textureIndex = ServiceLocator.Instance.Get<EnvironmentController>().voxelsData.data[(int)voxel].TexturePosition;
+            meshData.AddUV(TextureController.GetUvs(face, textureIndex));
         }
     }
     private void GenerateChunkMeshData()

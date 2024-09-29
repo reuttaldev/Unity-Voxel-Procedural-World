@@ -12,7 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: Voxels Data
   m_EditorClassIdentifier: Assembly-CSharp::VoxelsData
-  voxelData:
+  data:
   - type: 0
-    materials: []
-    generateCollision: 0
+    texturePosition: 00000000
+    generateCollision: 1
+  - type: 1
+    texturePosition: 01000000
+    generateCollision: 1
+  - type: 2
+    texturePosition: 020000000300000004000000
+    generateCollision: 1
+  - type: 3
+    texturePosition: 05000000
+    generateCollision: 1
+  - type: 4
+    texturePosition: 0600000007000000
+    generateCollision: 1
