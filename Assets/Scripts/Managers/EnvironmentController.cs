@@ -16,20 +16,12 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
     private void Start()
     {
         CreateFullChunk();
-        //CreateOneVoxelChunk();
     }
 
-    private void CreateOneVoxelChunk()
-    {
-        ChunkData chunk = new ChunkData();
-        chunk[0,0,0] = VoxelType.Dark_Sand;
-        var chunkGO = Instantiate(chunkPrefab);
-        var chunkRenderer = chunkGO.GetComponent<ChunkRenderer>();
-        chunkRenderer.Render(chunk);
-    }
     private void CreateFullChunk()
     {
-        ChunkData chunk = new ChunkData();
+        var chunkGO = Instantiate(chunkPrefab);
+        Chunk chunk = chunkGO.GetComponent<Chunk>();
         for (int x = 0; x < EnvironmentConstants.chunkWidth; x++)
         {
             for (int y = 0; y < EnvironmentConstants.chunkDepth; y++)
@@ -40,9 +32,7 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
                 }
             }
         }
-        var chunkGO = Instantiate(chunkPrefab);
-        var chunkRenderer = chunkGO.GetComponent<ChunkRenderer>();
-        chunkRenderer.Render(chunk);
+        ChunkRenderer.Render(chunk);
 
     }
 }
