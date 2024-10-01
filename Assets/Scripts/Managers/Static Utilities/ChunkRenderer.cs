@@ -16,7 +16,8 @@ public class ChunkRenderer : MonoBehaviour
 {
     private EnvironmentController envController;
     private ChunkData chunk;
-    private MeshData meshData;
+    private CollisionMesh collisionMesh = new CollisionMesh();
+    private WaterMesh waterMesh = new WaterMesh();
     private MeshCollider meshCollider;
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
@@ -32,18 +33,8 @@ public class ChunkRenderer : MonoBehaviour
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
     }
-    private MeshData GenerateChunkMeshData()
+    private void GenerateVoxelMeshData(Vector3Int relativePos, int textureIndex)
     {
-        foreach (var kvp in chunk.Voxels)
-        {
-            if (kvp.Value != VoxelType.Empty)
-                GenerateVoxelMeshData(kvp.Value, kvp.Key);
-        }
-        return meshData;
-    }
-    private void GenerateVoxelMeshData(VoxelType voxel, Vector3Int relativePos)
-    {
-        // for each face, add the needed vertices
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
             if (FaceHasNeighbor(relativePos, face))
@@ -52,23 +43,38 @@ public class ChunkRenderer : MonoBehaviour
             {
                 int vertexInFaceIndex = EnvironmentConstants.voxelFaces[face, faceVertex];
                 Vector3 vertexInFace = EnvironmentConstants.voxelVertices[vertexInFaceIndex];
-                meshData.AddVertices(vertexInFace + relativePos);
+                collisionMesh.AddVertices(vertexInFace + relativePos);
             }
-            // need to add 6 triangle points, but we added only 4 vertices for each face(bc 2 out of the 6 are duplicates)
-            // so add the triangles outside the loop 
-            // add the triangles s.t all the verticies we added in the loop are there in the adding order, including the duplicates that are not in the constants list 
-            meshData.AddTriangles();
-            int textureIndex = envController.voxelsData.data[(int)voxel].TexturePosition;
-            meshData.AddUV(TextureUtility.GetUvs(face, textureIndex));
+            // need 6 triangle points per face, but only 4 vertices are added (2 are duplicates).
+            // add triangles after the loop to ensure they reference all vertices in the correct order, including duplicates.
+            collisionMesh.AddTriangles();
+            collisionMesh.AddUV(TextureUtility.GetUvsForAtlas(face, textureIndex));
         }
     }
 
+    public void GenerateWaterMeshData(Vector3Int relativePos)
+    {
+        for (int face = 0; face < EnvironmentConstants.facesCount; face++)
+        {
+            // water only needs to be render in the faces that touch air (not against other cube
+            if (GetFaceNeighborType(relativePos, face) != VoxelType.Empty)
+                continue;
+            for (int faceVertex = 0; faceVertex < EnvironmentConstants.vertexNoDupCount; faceVertex++)
+            {
+                int vertexInFaceIndex = EnvironmentConstants.voxelFaces[face, faceVertex];
+                Vector3 vertexInFace = EnvironmentConstants.voxelVertices[vertexInFaceIndex];
+                waterMesh.AddVertices(vertexInFace + relativePos);
+            }
+            waterMesh.AddTriangles();
+            waterMesh.AddUV(TextureUtility.GetUvsForTexture(face));
+        }
+    }
     /// <summary>
     /// Checks if there is a voxel against the specified face. 
     /// If a voxel is present, there is no need to draw the face, 
     /// </summary>
     /// <returns>True if a voxel is present against the face; otherwise, false.</returns>
-    private bool FaceHasNeighbor(Vector3Int relativePos, int faceIndex)
+    private VoxelType GetFaceNeighborType(Vector3Int relativePos, int faceIndex)
     {
         // offset the position of the voxel we want to check by a value that corresponds to the face parallel to it. 
         Vector3Int posToCheck = relativePos + EnvironmentConstants.faceChecks[faceIndex];
@@ -85,26 +91,55 @@ public class ChunkRenderer : MonoBehaviour
             // add the game object transform to make the voxel poisiton global
             type = envController.GetVoxelTypeByGlobalPosition(posToCheck + gameObject.transform.position);
         }
+        return type;
+    }
+    private bool FaceHasNeighbor(Vector3Int relativePos, int faceIndex)
+    {
+        VoxelType type = GetFaceNeighborType(relativePos,faceIndex);
         return type != VoxelType.Empty;
     }
 
+    private void GenerateChunkMeshData()
+    {
+        foreach (var kvp in chunk.Voxels)
+        {
+            VoxelType type = kvp.Value;
+            switch (type)
+            {
+                case VoxelType.Empty:
+                    continue;
+                case VoxelType.Water:
+                    GenerateWaterMeshData(kvp.Key);
+                    break;
+                default:
+                    int textureIndex = envController.voxelsData.data[(int)type].TexturePosition;
+                    GenerateVoxelMeshData(kvp.Key, textureIndex);
+                    break;
+            }
+        }
+    }
+
     /// <summary>
-    ///  set the filter mesh to be the one we generated, so it is applied on the object
+    ///  set the filter mesh to be a mesh generated based on the collected data
     /// </summary>
     public void UploadMesh()
     {
-        if (meshData == null)
-        {
-            Debug.LogError("MeshData given to chunk is null");
-            return;
-        }
-        meshFilter.mesh = meshData.GenerateMeshFromData();
+        Mesh mesh = new Mesh();
+        mesh.subMeshCount = 2;
+        collisionMesh.UploadData(mesh);
+        waterMesh.UploadData(mesh);
+        mesh.RecalculateNormals();
+        meshFilter.mesh = mesh;
+
+        // add collision 
+        meshCollider.sharedMesh = collisionMesh.GetCollisionMesh();
     }
 
     public void Render(ChunkData data, EnvironmentController control)
     {
-        meshData = new CollisionMesh();
         chunk = data;
+        collisionMesh.Clear();
+        waterMesh.Clear();
         envController = control;
         GenerateChunkMeshData();
         UploadMesh();

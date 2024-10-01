@@ -4,7 +4,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using static UnityEditor.PlayerSettings;
 
-public class EnvironmentController : MonoBehaviour, IRegistrableService
+public class EnvironmentController : MonoBehaviour
 {
     [SerializeField]
     private GameObject chunkPrefab;
@@ -13,11 +13,6 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
     [SerializeField]
     private Transform chunksParent;
     private ChunkData[,] chunks = new ChunkData[EnvironmentConstants.worldSizeInChunks, EnvironmentConstants.worldSizeInChunks];
-    private void Awake()
-    {
-        ServiceLocator.Instance.Register<EnvironmentController>(this);
-    }
-
     private void Start()
     {
         // generate all the chunks and store them in the array before rendering
@@ -44,7 +39,7 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
         Debug.Log("Generating chunk at position " + pos);
 
         ChunkData chunk = new ChunkData();
-        ChunkUtility.FillChunkValues(chunk);
+        ChunkUtility.FillChunkValues(chunk, pos.ToWorldPosition());
 
         chunks[pos.x,pos.z] = chunk;
     }

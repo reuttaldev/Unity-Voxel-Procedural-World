@@ -7,16 +7,16 @@ public static class ChunkUtility
 {
 
     // world pos is not Unity's coordinates in the world but rather counting of the chunks
-    public static void FillChunkValues(ChunkData chunk)
+    public static void FillChunkValues(ChunkData chunk, Vector3 chunkWorldPos)
     {
         for (int x = 0; x < EnvironmentConstants.chunkWidth; x++)
         {
             for (int z = 0; z < EnvironmentConstants.chunkDepth; z++)
             {
 
-                float noise = Mathf.PerlinNoise(x * EnvironmentConstants.noiseScale, z * EnvironmentConstants.noiseScale);
+                float noise = Mathf.PerlinNoise((chunkWorldPos.x + x) * EnvironmentConstants.noiseScale, (chunkWorldPos.z + z) * EnvironmentConstants.noiseScale);
                 int groundHeight = Mathf.FloorToInt(noise * EnvironmentConstants.chunkHeight);
-
+                //Debug.Log("Ground Height is " + groundHeight);
                 for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
                 {
                     chunk[x, y, z] = DecideVoxelTypeByY(y, groundHeight);
@@ -29,20 +29,20 @@ public static class ChunkUtility
     {
         if (y > groundPos)
         {
-            //if (y < EnvironmentConstants.waterThreshold)
-                //return VoxelType.Water;
-            //else
+            if (y < EnvironmentConstants.waterThreshold)
+            {
+                return VoxelType.Water;
+            }
+            else
                 return VoxelType.Empty;
         }
-        else if (y < EnvironmentConstants.chunkHeight)
+        else if (y < groundPos)
         {
             return VoxelType.Light_Sand;
         }
-        else
-        {
-            return VoxelType.Grass;
+        // equals
+        return VoxelType.Grass;
 
-        }
     }
     public static Vector3Int GlobalVoxelPositionToLocal(ChunkPosition containingChunkPos, Vector3 globalVoxelPos)
     {

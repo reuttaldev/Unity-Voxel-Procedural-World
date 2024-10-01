@@ -30,11 +30,6 @@ public struct Voxel
     private int[] texturePosition;
     /// choose a random texture  
     public int TexturePosition => texturePosition[UnityEngine.Random.Range(0, texturePosition.Length)];
-    [SerializeField]
-    private bool generateCollision;
-    public bool GenerateCollision => generateCollision;
-
-
 }
 [CreateAssetMenu(fileName = "Voxels Data", menuName = "Scriptable Objects/Voxels Data")]
 public class VoxelsData : ScriptableObject

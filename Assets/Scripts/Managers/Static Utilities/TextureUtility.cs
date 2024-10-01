@@ -30,40 +30,33 @@ public static class TextureUtility
     /// Each face uses a set of 4 coordinates corresponding to the vertices in the face.
     /// This defines which part of the texture is mapped to each vertex.
     /// </summary>
-    private static Vector2[][] voxelUvs;
+    private static Vector2[][] voxelTextureUvs;
     static TextureUtility()
     {
         // each element in this array represents the texture coordinates for a single face of the voxel. 
         // this works only for an image with a single texture in it. 
-        voxelUvs = new Vector2[EnvironmentConstants.facesCount][];
-        voxelUvs[0] = GetNormalizedCoordinates(2, 1); // Back Face
-        voxelUvs[1] = GetNormalizedCoordinates(0,0); // Front Face
-        voxelUvs[2] = GetNormalizedCoordinates(1, 1); // Top Face
-        voxelUvs[3] = GetNormalizedCoordinates(0, 1); // Bottom Face
-        voxelUvs[4] = GetNormalizedCoordinates(2, 0); // Left Face
-        voxelUvs[5] = GetNormalizedCoordinates(1, 0); // Right Face
+        voxelTextureUvs = new Vector2[EnvironmentConstants.facesCount][];
+        voxelTextureUvs[0] = GetNormalizedCoordinates(2, 1); // Back Face
+        voxelTextureUvs[1] = GetNormalizedCoordinates(0,0); // Front Face
+        voxelTextureUvs[2] = GetNormalizedCoordinates(1, 1); // Top Face
+        voxelTextureUvs[3] = GetNormalizedCoordinates(0, 1); // Bottom Face
+        voxelTextureUvs[4] = GetNormalizedCoordinates(2, 0); // Left Face
+        voxelTextureUvs[5] = GetNormalizedCoordinates(1, 0); // Right Face
+    }
 
-       /* int textureCount = imagePixelSizeY / texturePixelSizeY;
-        voxelUvsByType = new Vector2[textureCount][];
-        for (int typeIndex = 0; typeIndex < textureCount; typeIndex++)
-        {
-            voxelUvsByType[typeIndex] = new Vector2[EnvironmentConstants.facesCount];
-            for (int faceIndex = 0; faceIndex < EnvironmentConstants.facesCount; faceIndex++)
-            {
-                /// The UV coordinates are adjusted by adding a vertical offset to account for the position of each texture within the image.
-                voxelUvsByType[faceIndex] = voxelUvs[faceIndex] + normalizedTextureSizeY * typeIndex;
-            }
-        }*/
+    public static Vector2[] GetUvsForTexture(int faceIndex)
+    {
+        return voxelTextureUvs[faceIndex];
     }
 
     /// Handle a texture atlas, where multiple textures are stacked vertically in a single image.
-    public static Vector2[] GetUvs(int faceIndex, int textureIndex)
+    public static Vector2[] GetUvsForAtlas(int faceIndex, int textureIndex)
     {
         Vector2[] modifiedArray = new Vector2[4];
 
         for (int i = 0; i < 4; i++)
         {
-            Vector2 v = voxelUvs[faceIndex][i];
+            Vector2 v = voxelTextureUvs[faceIndex][i];
             /// The UV coordinates are adjusted by adding a vertical offset to account for the position of each texture within the image.
             modifiedArray[i] = new Vector2(v.x, v.y + (textureIndex)* normalizedTextureSizeY );
         }

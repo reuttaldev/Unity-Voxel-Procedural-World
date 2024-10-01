@@ -1,17 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public static class EnvironmentConstants
 {
     public const int facesCount= 6;
     public const int vertexNoDupCount= 4;
     // x, z, y
-    public const int chunkWidth = 10, chunkDepth=10, chunkHeight=10;
+    public const int chunkWidth = 15, chunkDepth=15, chunkHeight=50;
     public const int worldSizeInChunks = 2;
     public static readonly int chunkSize = chunkWidth * chunkDepth * chunkHeight;
-    public const int waterThreshold = 60;
-    public const float noiseScale = 0.035f;
+    public const float waterScale = 0.3f;
+    public static readonly float waterThreshold = waterScale * chunkHeight;
+    public const float noiseScale = 0.02f;
 
     // voxel = cube in this context. These are the cube vertices
     public static readonly Vector3[] voxelVertices = new Vector3[8]
