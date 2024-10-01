@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 public class EnvironmentController : MonoBehaviour, IRegistrableService
 {
@@ -9,7 +10,9 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
     private GameObject chunkPrefab;
     [SerializeField]
     public VoxelsData voxelsData;
-    private Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
+    [SerializeField]
+    private Transform chunksParent;
+    private ChunkData[,] chunks = new ChunkData[EnvironmentConstants.worldSizeInChunks, EnvironmentConstants.worldSizeInChunks];
     private void Awake()
     {
         ServiceLocator.Instance.Register<EnvironmentController>(this);
@@ -17,42 +20,112 @@ public class EnvironmentController : MonoBehaviour, IRegistrableService
 
     private void Start()
     {
-        GenerateWorld();
+        // generate all the chunks and store them in the array before rendering
+        // this allows to perform checks on the shared faces between chunks (i.e., check if a face is visible or occluded).
+        // all chunks must be generated and present in the array for us to verify whether a shared face exists
+        GenerateWorldData();
+        RenderWorld();
     }
 
-    private void GenerateWorld()
+    private void GenerateWorldData()
     {
-        foreach (var chunk in chunks.Values)
-        {
-            Destroy(chunk.gameObject);
-        }
-        chunks.Clear();
+        DeleteChunks();
 
         for (var x = 0; x < EnvironmentConstants.worldSizeInChunks; x++)
         {
             for (var z = 0; z < EnvironmentConstants.worldSizeInChunks; z++)
             {
-                GenerateChunk(new Vector3Int(x * EnvironmentConstants.chunkWidth, 0, z * EnvironmentConstants.chunkDepth));
+                GenerateChunkData(new ChunkPosition(x,z));
             }
         }
     }
-    private void GenerateChunk(Vector3Int worldPos)
+    private void GenerateChunkData(ChunkPosition pos)
     {
-        var chunkGO = Instantiate(chunkPrefab, worldPos, Quaternion.identity);
-        Chunk chunk = chunkGO.GetComponent<Chunk>();
-        chunks[worldPos] = chunk;
-        ChunksUtility.FillChunkValues(chunk, worldPos);
-        ChunkRenderer.Render(chunk);
+        Debug.Log("Generating chunk at position " + pos);
+
+        ChunkData chunk = new ChunkData();
+        ChunkUtility.FillChunkValues(chunk);
+
+        chunks[pos.x,pos.z] = chunk;
     }
 
-    public VoxelType GetVoxelTypeByGlobalPosition(Vector3Int voxelGlobalPos)
+    private void RenderWorld()
     {
-        var chunkPos = ChunksUtility.GetChunkPositionByVoxelPosition(voxelGlobalPos);
-        if (chunks.ContainsKey(chunkPos))
+        for (int x = 0; x < EnvironmentConstants.worldSizeInChunks; x++)
         {
-            var voxelLocalPos = ChunksUtility.GlobalVoxelPositionToLocal(chunkPos, voxelGlobalPos);
-            return chunks[chunkPos][voxelLocalPos];
+            for(int z = 0; z < EnvironmentConstants.worldSizeInChunks; z++)
+            {
+                InstantiateAndRenderChunk(new ChunkPosition(x, z));
+            }
+        }
+    }
+
+    private void InstantiateAndRenderChunk(ChunkPosition pos)
+    {
+        var chunkGO = Instantiate(chunkPrefab, pos.ToWorldPosition(), Quaternion.identity);
+        chunkGO.transform.SetParent(chunksParent, true);
+        chunkGO.name = pos.ToString();
+        ChunkRenderer renderer = chunkGO.GetComponent<ChunkRenderer>();
+        renderer.Render(chunks[pos.x,pos.z], this);
+    }
+
+    private void DeleteChunks()
+    {
+        foreach (Transform child in chunksParent)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+    public VoxelType GetVoxelTypeByGlobalPosition(Vector3 voxelGlobalPos)
+    {
+        if(voxelGlobalPos.y<0)
+            return VoxelType.Empty;
+        // get the position of the chunk that contains this voxel
+        var chunkPos = new ChunkPosition(voxelGlobalPos);
+        if (chunkPos.IsValid())
+        {
+            var voxelLocalPos = ChunkUtility.GlobalVoxelPositionToLocal(chunkPos, voxelGlobalPos);
+            return chunks[chunkPos.x, chunkPos.z][voxelLocalPos];
         }
         return VoxelType.Empty;
+    }
+}
+
+/// <summary>
+/// The world position is not represented in Unity's world coordinates; 
+/// instead, it is based on a counting system that tracks the positions of chunks.
+/// </summary>
+public struct ChunkPosition
+{
+    public int x { get; }
+    public int z { get; }
+
+    public ChunkPosition(int x, int z)
+    {
+        this.x = x;
+        this.z = z;
+    }
+    public ChunkPosition(Vector3 v)
+    {
+        this.x = Mathf.FloorToInt(v.x/ EnvironmentConstants.chunkWidth);
+        this.z = Mathf.FloorToInt(v.z/ EnvironmentConstants.chunkDepth);
+    }
+    public override string ToString()
+    {
+        return $"({x} , {z})";
+    }
+
+    /// <summary>
+    /// Transform the chunk system coordinates to Unity's regular world coordinates
+    /// </summary>
+    /// <returns></returns>
+    public Vector3Int ToWorldPosition()
+    {
+        return new Vector3Int(x*EnvironmentConstants.chunkWidth, 0, z * EnvironmentConstants.chunkDepth);
+    }
+    public bool IsValid()
+    {
+        return x < EnvironmentConstants.worldSizeInChunks && z < EnvironmentConstants.worldSizeInChunks && x>=0 && z>=0;
+
     }
 }

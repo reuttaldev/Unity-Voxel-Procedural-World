@@ -8,7 +8,7 @@ public static class EnvironmentConstants
     public const int vertexNoDupCount= 4;
     // x, z, y
     public const int chunkWidth = 10, chunkDepth=10, chunkHeight=10;
-    public const int worldSizeInChunks = 1;
+    public const int worldSizeInChunks = 2;
     public static readonly int chunkSize = chunkWidth * chunkDepth * chunkHeight;
     public const int waterThreshold = 60;
     public const float noiseScale = 0.035f;
@@ -46,18 +46,18 @@ public static class EnvironmentConstants
 
     public static readonly Vector3Int[] faceChecks = new Vector3Int[facesCount] 
     {
-        // forward 
-        new Vector3Int(0, 0, 1),
         // backwards
         new Vector3Int(0, 0, -1),
-        // right
-        new Vector3Int(1, 0, 0),
-        // left 
-        new Vector3Int(-1, 0, 0),
+        // forward 
+        new Vector3Int(0, 0, 1),
         // up
         new Vector3Int(0, 1, 0),
         // down
         new Vector3Int(0, -1, 0),
+        // left 
+        new Vector3Int(-1, 0, 0),
+        // right
+        new Vector3Int(1, 0, 0),
 
     };
 
