@@ -5,45 +5,6 @@ using static UnityEditor.PlayerSettings;
 
 public static class ChunkUtility
 {
-
-    // world pos is not Unity's coordinates in the world but rather counting of the chunks
-    public static void FillChunkValues(ChunkData chunk, Vector3 chunkWorldPos)
-    {
-        for (int x = 0; x < EnvironmentConstants.chunkWidth; x++)
-        {
-            for (int z = 0; z < EnvironmentConstants.chunkDepth; z++)
-            {
-
-                float noise = Mathf.PerlinNoise((chunkWorldPos.x + x) * EnvironmentConstants.noiseScale, (chunkWorldPos.z + z) * EnvironmentConstants.noiseScale);
-                int groundHeight = Mathf.FloorToInt(noise * EnvironmentConstants.chunkHeight);
-                //Debug.Log("Ground Height is " + groundHeight);
-                for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
-                {
-                    chunk[x, y, z] = DecideVoxelTypeByY(y, groundHeight);
-                }
-            }
-        }
-    }
-    /// Determines the appropriate VoxelType based on the Y coordinate (height) of the voxel.
-    public static VoxelType DecideVoxelTypeByY(int y, int groundPos)
-    {
-        if (y > groundPos)
-        {
-            if (y < EnvironmentConstants.waterThreshold)
-            {
-                return VoxelType.Water;
-            }
-            else
-                return VoxelType.Empty;
-        }
-        else if (y < groundPos)
-        {
-            return VoxelType.Light_Sand;
-        }
-        // equals
-        return VoxelType.Grass;
-
-    }
     public static Vector3Int GlobalVoxelPositionToLocal(ChunkPosition containingChunkPos, Vector3 globalVoxelPos)
     {
         var chunkWorldPos = containingChunkPos.ToWorldPosition();
@@ -60,7 +21,6 @@ public static class ChunkUtility
             return false;
         return true;
     }
-
     public static bool ValidGlobalVoxelCoordinates(Vector3Int coordinates)
     {
         return coordinates.y >= 0; 

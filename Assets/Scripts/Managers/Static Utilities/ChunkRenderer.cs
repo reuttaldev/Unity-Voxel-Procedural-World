@@ -14,7 +14,7 @@ using static UnityEngine.RuleTile.TilingRuleOutput;
 [RequireComponent(typeof(MeshRenderer))]
 public class ChunkRenderer : MonoBehaviour
 {
-    private EnvironmentController envController;
+    private ChunkController controller;
     private ChunkData chunk;
     private CollisionMesh collisionMesh = new CollisionMesh();
     private WaterMesh waterMesh = new WaterMesh();
@@ -89,7 +89,7 @@ public class ChunkRenderer : MonoBehaviour
         {
             // access the chunk the voxel is in 
             // add the game object transform to make the voxel poisiton global
-            type = envController.GetVoxelTypeByGlobalPosition(posToCheck + gameObject.transform.position);
+            type = controller.GetVoxelTypeByGlobalPos(posToCheck + gameObject.transform.position);
         }
         return type;
     }
@@ -112,7 +112,7 @@ public class ChunkRenderer : MonoBehaviour
                     GenerateWaterMeshData(kvp.Key);
                     break;
                 default:
-                    int textureIndex = envController.voxelsData.data[(int)type].TexturePosition;
+                    int textureIndex = controller.voxelsTextureData.data[(int)type].TexturePosition;
                     GenerateVoxelMeshData(kvp.Key, textureIndex);
                     break;
             }
@@ -135,12 +135,12 @@ public class ChunkRenderer : MonoBehaviour
         meshCollider.sharedMesh = collisionMesh.GetCollisionMesh();
     }
 
-    public void Render(ChunkData data, EnvironmentController control)
+    public void Render(ChunkData data, ChunkController control)
     {
         chunk = data;
         collisionMesh.Clear();
         waterMesh.Clear();
-        envController = control;
+        controller = control;
         GenerateChunkMeshData();
         UploadMesh();
     }
@@ -151,7 +151,7 @@ public class ChunkRenderer : MonoBehaviour
         if (showGizmos && Application.isPlaying && Selection.activeObject == gameObject)
         {
             Gizmos.color = new Color(1, 0, 1, 0.4f);
-            Vector3 half = new Vector3(EnvironmentConstants.chunkWidth / 2f, EnvironmentConstants.chunkDepth / 2f, EnvironmentConstants.chunkHeight / 2f);
+            Vector3 half = new Vector3(EnvironmentConstants.chunkWidth / 2f, EnvironmentConstants.chunkHeight / 2f ,EnvironmentConstants.chunkDepth / 2f);
             Gizmos.DrawCube(transform.position + half, half * 2);
         }
     }

@@ -9,7 +9,7 @@ public static class EnvironmentConstants
     public const int vertexNoDupCount= 4;
     // x, z, y
     public const int chunkWidth = 15, chunkDepth=15, chunkHeight=50;
-    public const int worldSizeInChunks = 2;
+    public const int worldSizeInChunks = 4;
     public static readonly int chunkSize = chunkWidth * chunkDepth * chunkHeight;
     public const float waterScale = 0.3f;
     public static readonly float waterThreshold = waterScale * chunkHeight;
