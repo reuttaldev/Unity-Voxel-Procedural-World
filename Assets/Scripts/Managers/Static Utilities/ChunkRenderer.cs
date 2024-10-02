@@ -96,7 +96,8 @@ public class ChunkRenderer : MonoBehaviour
     private bool FaceHasNeighbor(Vector3Int relativePos, int faceIndex)
     {
         VoxelType type = GetFaceNeighborType(relativePos,faceIndex);
-        return type != VoxelType.Empty;
+        // need to render (ground) voxels under water as well 
+        return type != VoxelType.Empty && type != VoxelType.Water;
     }
 
     private void GenerateChunkMeshData()
@@ -124,15 +125,15 @@ public class ChunkRenderer : MonoBehaviour
     /// </summary>
     public void UploadMesh()
     {
+        // add collision 
+        meshCollider.sharedMesh = collisionMesh.GetCollisionMesh();
+
         Mesh mesh = new Mesh();
         mesh.subMeshCount = 2;
         collisionMesh.UploadData(mesh);
         waterMesh.UploadData(mesh);
         mesh.RecalculateNormals();
         meshFilter.mesh = mesh;
-
-        // add collision 
-        meshCollider.sharedMesh = collisionMesh.GetCollisionMesh();
     }
 
     public void Render(ChunkData data, ChunkController control)

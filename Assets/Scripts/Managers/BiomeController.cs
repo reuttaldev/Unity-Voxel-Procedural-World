@@ -35,6 +35,8 @@ public class BiomeController : MonoBehaviour
         {
             if (y < EnvironmentConstants.waterThreshold)
             {
+                if (y == groundPos +1)
+                    return VoxelType.Dark_Sand;
                 return VoxelType.Water;
             }
             else
