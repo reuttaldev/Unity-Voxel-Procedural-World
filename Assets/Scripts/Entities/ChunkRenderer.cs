@@ -1,10 +1,5 @@
-using System;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.Mesh;
-using static UnityEngine.RuleTile.TilingRuleOutput;
 
 /// This class is in charge of combining a group of voxels into one mesh that will be rendered optimally (only the outer faces of the cubes will be created, not the ones that are overlapping).
 [RequireComponent(typeof(MeshCollider))]
@@ -15,7 +10,7 @@ using static UnityEngine.RuleTile.TilingRuleOutput;
 public class ChunkRenderer : MonoBehaviour
 {
     private ChunkController controller;
-    private ChunkData chunk;
+    private ChunkData data;
     private CollisionMesh collisionMesh = new CollisionMesh();
     private WaterMesh waterMesh = new WaterMesh();
     private MeshCollider meshCollider;
@@ -82,7 +77,7 @@ public class ChunkRenderer : MonoBehaviour
         if (ChunkUtility.ValidLocalVoxelCoordinates(posToCheck))
         {
             // if a voxel exists at this new position, the two voxels are touching.
-            type = chunk[posToCheck];
+            type = data[posToCheck];
         }
         // meaning the voxel that requires checking is not in this specific chunk
         else 
@@ -102,7 +97,7 @@ public class ChunkRenderer : MonoBehaviour
 
     private void GenerateChunkMeshData()
     {
-        foreach (var kvp in chunk.Voxels)
+        foreach (var kvp in data.Voxels)
         {
             VoxelType type = kvp.Value;
             switch (type)
@@ -138,7 +133,7 @@ public class ChunkRenderer : MonoBehaviour
 
     public void Render(ChunkData data, ChunkController control)
     {
-        chunk = data;
+        this.data = data;
         collisionMesh.Clear();
         waterMesh.Clear();
         controller = control;

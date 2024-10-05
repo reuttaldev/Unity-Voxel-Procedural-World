@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -8,12 +9,14 @@ using static UnityEditor.PlayerSettings;
 public class EnvironmentController : MonoBehaviour
 {
     [SerializeField]
-    private GameObject player;
+    private Transform player;
     [SerializeField]
     private ChunkController chunkController;
 
     // time passed between checks to see if more chunks need to be generated 
-    private float checkTime = 1;
+    //private float updateTime = 3;
+    // the position of the chunk the player was on during our last check
+    private ChunkPosition playerLastChunk; 
     // as the player moves we need to create the chunks at different locations. this offset tells us where 
     private Vector2Int worldOffset = new Vector2Int(0,0);
 
@@ -28,8 +31,6 @@ public class EnvironmentController : MonoBehaviour
     }
     private void GenerateWorldData()
     {
-        chunkController.DeleteChunks();
-
         for (var x = 0; x < EnvironmentConstants.worldSizeInChunks; x++)
         {
             for (var z = 0; z < EnvironmentConstants.worldSizeInChunks; z++)
@@ -53,21 +54,54 @@ public class EnvironmentController : MonoBehaviour
     {
         float midX = (EnvironmentConstants.worldSizeInChunks * EnvironmentConstants.chunkWidth)/2;
         float midZ = (EnvironmentConstants.worldSizeInChunks * EnvironmentConstants.chunkDepth)/2;
-        Debug.Log(midX);
-        Vector3 worldMidPoint = new Vector3(midX, EnvironmentConstants.chunkHeight+10 , midX);
+        Vector3 worldMidPoint = new Vector3(midX, EnvironmentConstants.chunkHeight+10 , midZ);
         // need to find the y position, to place the player at 
-        Debug.DrawRay(worldMidPoint, Vector3.down * EnvironmentConstants.chunkHeight * 2, Color.red, 2000.0f); // Duration is 2 seconds
         RaycastHit hit;
-        if (Physics.Raycast(worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight*2))
+        if (Physics.Raycast(worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight))
         {
-            player.transform.position = hit.point;
+            player.position = hit.point;
+            playerLastChunk = new ChunkPosition(hit.point);
         }
         else
             Debug.LogError("Could not find position to player the player at");
    }
 
-    private void LoadMoreChunks()
+    private void UpdateWorld(ChunkPosition playerCurrentChunk)
     {
         Debug.Log("Loading more chunks");
+        playerLastChunk = playerCurrentChunk;
+        IEnumerable<ChunkPosition> surroundingPlayerChunks = ChunkUtility.GetChunkPositionsAroundPos(playerCurrentChunk);
+        // get the chunks that are surrounding the player, but don't already exist
+        ChunkPosition[] chunksToCreate = chunkController.GetNonExistingChunks(surroundingPlayerChunks, player.position);
+        // get the chunks that used to surround the player, but don't anymore
+        ChunkPosition[] chunksToDelete = chunkController.GetExcessChunks(surroundingPlayerChunks).ToArray();
+
+        foreach (ChunkPosition chunkPosition in chunksToCreate)
+        {
+            chunkController.GenerateChunkData(chunkPosition);
+        }
+        foreach (ChunkPosition chunkPosition in chunksToCreate)
+        {
+            chunkController.InstantiateAndRenderChunk(chunkPosition);
+        }
+        foreach(ChunkPosition chunkPosition in chunksToDelete)
+        {
+            chunkController.DeleteChunk(chunkPosition);
+        }
+    }
+
+    /// <summary>
+    /// Procedurally generate based on the players position
+    /// </summary>
+    private void Update()
+    {
+        // wait for seconds 
+        ChunkPosition playerCurrentChunk = new ChunkPosition(player.position);
+        // we remain on the same chunk, no need to generate more 
+        if (Equals(playerCurrentChunk, playerLastChunk))
+        {
+            return; 
+        }
+        UpdateWorld(playerCurrentChunk);    
     }
 }

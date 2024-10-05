@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ChunkController : MonoBehaviour
@@ -13,16 +15,14 @@ public class ChunkController : MonoBehaviour
     [SerializeField]
     public VoxelsTextureData voxelsTextureData;
 
-    private ChunkData[,] chunks = new ChunkData[EnvironmentConstants.worldSizeInChunks, EnvironmentConstants.worldSizeInChunks];
+    private Dictionary<ChunkPosition,ChunkData> chunks = new Dictionary<ChunkPosition, ChunkData>();
 
     public void GenerateChunkData(ChunkPosition pos)
     {
         Debug.Log("Generating chunk at position " + pos);
-
         ChunkData chunk = new ChunkData();
         FillChunkValues(chunk, pos.ToWorldPosition());
-
-        chunks[pos.x, pos.z] = chunk;
+        chunks[pos] = chunk;
     }
 
     private void FillChunkValues(ChunkData chunk, Vector3 chunkWorldPos)
@@ -37,19 +37,26 @@ public class ChunkController : MonoBehaviour
     }
     public void InstantiateAndRenderChunk(ChunkPosition pos)
     {
+        Debug.Log("Rendering chunk at position " + pos);
+        ChunkData chunk = chunks[pos];
         var chunkGO = Instantiate(chunkPrefab, pos.ToWorldPosition(), Quaternion.identity);
         chunkGO.transform.SetParent(chunksParent);
         chunkGO.name = pos.ToString();
+        chunk.gameObject = chunkGO;
         ChunkRenderer renderer = chunkGO.GetComponent<ChunkRenderer>();
-        renderer.Render(chunks[pos.x, pos.z], this);
+        renderer.Render(chunk, this);
     }
 
-    public void DeleteChunks()
+    public void DeleteChunk(ChunkPosition pos)
     {
-        foreach (Transform child in chunksParent)
+        if (chunks.TryGetValue(pos, out var chunk))
         {
-            Destroy(child.gameObject);
+            Destroy(chunk.gameObject);
+            chunk.gameObject = null;
+            chunks.Remove(pos);
         }
+        else
+            Debug.LogError("Trying to delete chunk in position that does not exist");
     }
     public VoxelType GetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos)
     {
@@ -60,9 +67,26 @@ public class ChunkController : MonoBehaviour
         if (chunkPos.IsValid())
         {
             var voxelLocalPos = ChunkUtility.GlobalVoxelPositionToLocal(chunkPos, voxelGlobalPos);
-            return chunks[chunkPos.x, chunkPos.z][voxelLocalPos];
+            return chunks[chunkPos][voxelLocalPos];
         }
         return VoxelType.Empty;
+    }
+
+    /// <summary>
+    /// return the elements from l that are not found in our chunk dictionary, order by distance (so we render the chunks that are closest to the player first). 
+    /// to array because we want to take a snapshot of the chunks collection as it is, since it might change between iteration as we generate new data
+    /// </summary>
+    public ChunkPosition[] GetNonExistingChunks(IEnumerable<ChunkPosition> l, Vector3 orderByPos)
+    {
+        return l.Where(pos => !chunks.ContainsKey(pos)).OrderBy(pos=> Vector3.Distance(orderByPos, pos.ToWorldPosition())).ToArray();
+    }
+    /// <summary>
+    /// return the that are found in our chunk dictionary but not in l. The order does not matter
+    /// to array because we will change the Collection while iterating (by deleting) and we cannot do that on IEnumerable
+    /// </summary>
+    public ChunkPosition[] GetExcessChunks(IEnumerable<ChunkPosition> l)
+    {
+        return chunks.Keys.Where(pos => !l.Contains(pos)).ToArray();
     }
 }
 /// <summary>

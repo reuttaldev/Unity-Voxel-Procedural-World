@@ -52,5 +52,6 @@ public class ChunkData
             this[new Vector3Int(x, y, z)] = value;
         }
     }
-
+    /// the gameobject that implements this data
+    public GameObject gameObject; 
 }

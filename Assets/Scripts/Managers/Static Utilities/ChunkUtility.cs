@@ -21,9 +21,21 @@ public static class ChunkUtility
             return false;
         return true;
     }
-    public static bool ValidGlobalVoxelCoordinates(Vector3Int coordinates)
+
+    /// <summary>
+    /// Returns a list of chunk positions that are surrounding the given pos
+    /// elements are being generated on the fly, can return Ienumerable safley
+    /// </summary>
+    public static IEnumerable<ChunkPosition> GetChunkPositionsAroundPos(ChunkPosition pos)
     {
-        return coordinates.y >= 0; 
+        int size = EnvironmentConstants.worldSizeInChunks / 2;
+        for (int x = pos.x -size; x < pos.x + size; x++)
+        {
+            for (int z = pos.z - size; z < pos.z + size; z++)
+            {
+                yield return (new ChunkPosition(x, z));  
+            }
+        }
     }
 
 }
