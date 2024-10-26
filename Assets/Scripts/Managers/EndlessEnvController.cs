@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -22,25 +20,20 @@ public class EndlessEnvController : MonoBehaviour
     private ChunkPosition playerCurrentChunk,playerLastChunk; 
     // as the player moves we need to create the chunks at different locations. this offset tells us where 
     private Vector2Int worldOffset = new Vector2Int(0,0);
-
-    private Task generateChunkDataTask;
-    CancellationTokenSource taskToken = new CancellationTokenSource();
-    private async void Start()
+    private void Start()
     {
         var initPoses = ChunkUtility.GetInitChunksPositions();
-        await GenerateWorld(initPoses);
+        GenerateWorld(initPoses);
         PlacePlayer();
     }
-    private async Task GenerateWorld(ChunkPosition[] poses)
+    private void GenerateWorld(ChunkPosition[] poses)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
         generating = true;
         // Step 1: Generate the chunk data, i.e which voxel type need to be at each position for that chunk
         // This is done before rendering to allow checks on the shared faces between chunks (i.e., check if a face is visible or occluded).
         // all chunks must be generated and present in the array for us to verify whether a shared face exists
-        generateChunkDataTask = GenerateWorldData(poses);
-        await generateChunkDataTask;
-
+        GenerateWorldData(poses);
         // Step 2: Instantiate (or use from an existing pool) chunk game object, so we have something to apply the mesh to
         // By unity specifications, instantiation must be done on the main thread 
         foreach (var pos in poses)
@@ -51,7 +44,7 @@ public class EndlessEnvController : MonoBehaviour
         //Step 3: Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
         // must be done after generating the game objects since the renderer is a component of the game object.
         // need to change this- so it can be done in parallel 
-        await GenerateWorldMeshData(poses);
+        GenerateWorldMeshData(poses);
 
         /// Step 4: Render the chunk based on the chunk mesh data that was calculated previously.
         /// again,must be done on the main thread
@@ -65,12 +58,12 @@ public class EndlessEnvController : MonoBehaviour
     /// <summary>
     /// Procedurally generate based on the players position
     /// </summary>
-    private async void Update()
+    private void Update()
     {
         if (Mouse.current.rightButton.isPressed)
         {
             var initPoses = ChunkUtility.GetInitChunksPositions();
-            await GenerateWorld(initPoses);
+            GenerateWorld(initPoses);
         }
 
         // wait for seconds
@@ -92,7 +85,7 @@ public class EndlessEnvController : MonoBehaviour
 
         }
     }
-    private async void UpdateWorld()
+    private void UpdateWorld()
     {
         // I do .ToArray on the returned Ienumerables  because the player is moving in the background, and that causes changes the dictionaries to change. So the result may change from the time the request was called until it is evaluated.
         ChunkPosition[] surroundingPlayerChunks = ChunkUtility.GetChunkPositionsAroundPos(playerCurrentChunk).ToArray();
@@ -105,35 +98,22 @@ public class EndlessEnvController : MonoBehaviour
         {
             chunkController.DeleteChunk(chunkPosition);
         }
-        await GenerateWorld(chunksToCreate);
+        GenerateWorld(chunksToCreate);
     }
-    private Task GenerateWorldData(IEnumerable<ChunkPosition> chunkPositions)
+    private void GenerateWorldData(IEnumerable<ChunkPosition> chunkPositions)
     {
-        return Task.Run(() =>
-        {
             foreach (var pos in chunkPositions)
             {
-                if (taskToken.IsCancellationRequested)
-                    return;
                 chunkController.GenerateChunkData(pos);       
             }
-        }
-        , taskToken.Token
-        );
+
     }
-    private Task GenerateWorldMeshData(IEnumerable<ChunkPosition> chunkPositions)
+    private void GenerateWorldMeshData(IEnumerable<ChunkPosition> chunkPositions)
     {
-        return Task.Run(() =>
-        {
             foreach (var pos in chunkPositions)
             {
-                if (taskToken.IsCancellationRequested)
-                    return;
                 chunkController.GenerateChunkMeshData(pos);
             }
-        }
-        ,taskToken.Token
-        );
     }
    private void PlacePlayer()
     {
@@ -152,8 +132,4 @@ public class EndlessEnvController : MonoBehaviour
             UnityEngine.Debug.LogError("Could not find position to player the player at");
    }
 
-    void OnDisable()
-    {
-        taskToken.Cancel();
-    }
 }
