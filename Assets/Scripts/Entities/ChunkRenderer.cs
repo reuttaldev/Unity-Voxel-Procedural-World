@@ -9,25 +9,27 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 public class ChunkRenderer : MonoBehaviour
 {
-    private ChunkController controller;
     private ChunkData data;
-    private CollisionMesh collisionMesh = new CollisionMesh();
-    private WaterMesh waterMesh = new WaterMesh();
+    private CollisionMesh collisionMesh;
+    private WaterMesh waterMesh;
     private MeshCollider meshCollider;
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
+    private ChunkPosition chunkPos; 
 
 #if UNITY_EDITOR
     [SerializeField]
     bool showGizmos = true;
 #endif
-
     private void Awake()
     {
         meshCollider = GetComponent<MeshCollider>();
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
+        collisionMesh = new CollisionMesh();
+        waterMesh = new WaterMesh();
     }
+
     private void GenerateVoxelMeshData(Vector3Int relativePos, int textureIndex)
     {
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
@@ -47,7 +49,7 @@ public class ChunkRenderer : MonoBehaviour
         }
     }
 
-    public void GenerateWaterMeshData(Vector3Int relativePos)
+    private void GenerateWaterMeshData(Vector3Int relativePos)
     {
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
@@ -84,7 +86,7 @@ public class ChunkRenderer : MonoBehaviour
         {
             // access the chunk the voxel is in 
             // add the game object transform to make the voxel poisiton global
-            type = controller.GetVoxelTypeByGlobalPos(posToCheck + gameObject.transform.position);
+            type = ChunkGenerator.Instance.GetVoxelTypeByGlobalPos(posToCheck + chunkPos.ToWorldPosition());
         }
         return type;
     }
@@ -93,10 +95,14 @@ public class ChunkRenderer : MonoBehaviour
         VoxelType type = GetFaceNeighborType(relativePos,faceIndex);
         // need to render (ground) voxels under water as well 
         return type != VoxelType.Empty && type != VoxelType.Water;
+
     }
 
-    private void GenerateChunkMeshData()
+    public void GenerateChunkMeshData(ChunkData data, ChunkPosition pos)
     {
+        // init the class with the given data. These may change at every generation
+        this.data = data;
+        this.chunkPos = pos;    
         foreach (var kvp in data.Voxels)
         {
             VoxelType type = kvp.Value;
@@ -108,37 +114,45 @@ public class ChunkRenderer : MonoBehaviour
                     GenerateWaterMeshData(kvp.Key);
                     break;
                 default:
-                    int textureIndex = controller.voxelsTextureData.data[(int)type].TexturePosition;
+                    int textureIndex = ChunkGenerator.Instance.voxelsTextureData.data[(int)type].TexturePosition;
                     GenerateVoxelMeshData(kvp.Key, textureIndex);
                     break;
             }
         }
     }
 
-    /// <summary>
-    ///  set the filter mesh to be a mesh generated based on the collected data
-    /// </summary>
-    public void UploadMesh()
+    public void ClearLastGeneration()
     {
+        collisionMesh.Clear();
+        waterMesh.Clear();
+    }
+
+    /// <summary>
+    ///  Upload the calculated mesh to the game object; set the filter mesh to be a mesh generated based on the collected data.
+    ///  must be done on the main thread
+    /// </summary>
+    public void Render()
+    {
+        if (this.data == null)
+        {
+            Debug.LogError("Trying to render before initiating the renderer.");
+            return;
+        }
+        if(collisionMesh.Empty)
+        {
+            Debug.LogError("Trying to render before calculating mesh data.");
+            return;
+        }
+
         // add collision 
         meshCollider.sharedMesh = collisionMesh.GetCollisionMesh();
-
+        // create the Unity mesh, and fill it with our calculated mesh data
         Mesh mesh = new Mesh();
         mesh.subMeshCount = 2;
         collisionMesh.UploadData(mesh);
         waterMesh.UploadData(mesh);
         mesh.RecalculateNormals();
         meshFilter.mesh = mesh;
-    }
-
-    public void Render(ChunkData data, ChunkController control)
-    {
-        this.data = data;
-        collisionMesh.Clear();
-        waterMesh.Clear();
-        controller = control;
-        GenerateChunkMeshData();
-        UploadMesh();
     }
 
 #if UNITY_EDITOR

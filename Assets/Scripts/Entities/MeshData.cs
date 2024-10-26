@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 //https://docs.unity3d.com/ScriptReference/Mesh.html
@@ -12,6 +13,7 @@ public abstract class MeshData
     /// The vector 2 tells the position of the pixel on the image, and the index of the vector 2 in this uv array tells which index from the vetor list it will correspond (and be painted on)
     protected List<Vector2> uvs;
     protected int layerIndex;
+    public bool Empty => vertices.Count == 0;
     public MeshData()
     {
         vertices = new List<Vector3>();

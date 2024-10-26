@@ -29,7 +29,7 @@ public struct Voxel
     /// The texture file contains the textures for all voxel types, stacked vertically. This marks how many other textures are stacked underneath it. 
     private int[] texturePosition;
     /// choose a random texture  
-    public int TexturePosition => texturePosition[UnityEngine.Random.Range(0, texturePosition.Length)];
+    public int TexturePosition => texturePosition[new System.Random().Next(0, texturePosition.Length)];
 }
 [CreateAssetMenu(fileName = "Voxels Texture Data", menuName = "Scriptable Objects/Voxels Texture Data")]
 public class VoxelsTextureData : ScriptableObject
