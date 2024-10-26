@@ -29,7 +29,6 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
     /// <param name="pos"></param>
     public void GenerateChunkData(ChunkPosition pos)
     {
-        Debug.Log("Generating chunk at position " + pos);
         ChunkData chunk = new ChunkData();
         FillChunkValues(chunk, pos.ToWorldPosition());
         chunks[pos] = chunk;
@@ -48,9 +47,8 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
     /// Step 2: Instantiate (or use from an existing pool) chunk game object
     /// this must be done on the main thread 
     /// </summary>
-    private void InstantiateChunkGO(ChunkPosition pos)
+    public void InstantiateChunkGO(ChunkPosition pos)
     {
-        Debug.Log("Instantiating chunk at position " + pos);
         ChunkData chunkData = chunks[pos];
         var chunkGO = Instantiate(chunkPrefab, pos.ToWorldPosition(), Quaternion.identity);
         chunkGO.transform.SetParent(chunksParent);
@@ -76,7 +74,7 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
         chunkGO.transform.position = newPos.ToWorldPosition();
     }
     // completely delete the  gameobject
-    private void DeleteChunk(ChunkPosition pos)
+    public void DeleteChunk(ChunkPosition pos)
     {
         chunks.Remove(pos);
         var rendrer = chunksRenderers[pos];
@@ -119,7 +117,15 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
     /// Step 4: Render the chunk based on the chunk mesh data that was calculated previously.
     /// Must be done on the main thread as we are setting the game object's properties 
     /// </summary>
-    public IEnumerator RenderChunks(ChunkPosition[] poses)
+    public void RenderChunks(ChunkPosition[] poses)
+    {
+        for (int i = 0; i < poses.Length; i++)
+        {
+            chunksRenderers[poses[i]].Render();
+        }
+        OnRenderFinished?.Invoke();
+    }
+    public IEnumerator RenderChunksSequentially(ChunkPosition[] poses)
     {
         for(int i = 0; i< poses.Length; i++)
         {

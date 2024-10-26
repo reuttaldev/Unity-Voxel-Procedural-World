@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 
 public class EndlessEnvController : MonoBehaviour
@@ -12,7 +13,9 @@ public class EndlessEnvController : MonoBehaviour
     private Transform player;
     [SerializeField]
     private ChunkGenerator chunkController;
-
+    [SerializeField]
+    private float restDuration = 2f,time = 0 ;
+    private bool generating = false;
     // time passed between checks to see if more chunks need to be generated 
     //private float updateTime = 3;
     // the position of the chunk the player was on during our last check
@@ -21,17 +24,17 @@ public class EndlessEnvController : MonoBehaviour
     private Vector2Int worldOffset = new Vector2Int(0,0);
 
     private Task generateChunkDataTask;
-    CancellationTokenSource generationTaskToken = new CancellationTokenSource();
+    CancellationTokenSource taskToken = new CancellationTokenSource();
     private async void Start()
     {
         var initPoses = ChunkUtility.GetInitChunksPositions();
         await GenerateWorld(initPoses);
         PlacePlayer();
-
-        // when iterating these, the values will reflect changes as the player moves, since the returned value is Ienumerable and they use deferred execution 
     }
     private async Task GenerateWorld(ChunkPosition[] poses)
     {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        generating = true;
         // Step 1: Generate the chunk data, i.e which voxel type need to be at each position for that chunk
         // This is done before rendering to allow checks on the shared faces between chunks (i.e., check if a face is visible or occluded).
         // all chunks must be generated and present in the array for us to verify whether a shared face exists
@@ -42,7 +45,7 @@ public class EndlessEnvController : MonoBehaviour
         // By unity specifications, instantiation must be done on the main thread 
         foreach (var pos in poses)
         {
-            chunkController.CreateChunkGO(pos);
+            chunkController.InstantiateChunkGO(pos);
         }
 
         //Step 3: Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
@@ -52,25 +55,44 @@ public class EndlessEnvController : MonoBehaviour
 
         /// Step 4: Render the chunk based on the chunk mesh data that was calculated previously.
         /// again,must be done on the main thread
-        StartCoroutine(chunkController.RenderChunks(poses));
+        //StartCoroutine(chunkController.RenderChunksSequentially(poses));
+        chunkController.RenderChunks(poses);
+        generating = false;
+        stopwatch.Stop();
+        UnityEngine.Debug.Log($"Generation took: {stopwatch.ElapsedMilliseconds} ms");
     }
 
     /// <summary>
     /// Procedurally generate based on the players position
     /// </summary>
-    private void Update()
+    private async void Update()
     {
-        // wait for seconds 
+        if (Mouse.current.rightButton.isPressed)
+        {
+            var initPoses = ChunkUtility.GetInitChunksPositions();
+            await GenerateWorld(initPoses);
+        }
+
+        // wait for seconds
+        time += Time.deltaTime;
+        if (time <= restDuration)
+            return;
+        time = 0;
+
         playerCurrentChunk = new ChunkPosition(player.position);
         // we remain on the same chunk, no need to generate more 
         if (Equals(playerCurrentChunk, playerLastChunk))
         {
             return;
         }
-        playerLastChunk = playerCurrentChunk;
-        UpdateWorld();
+        if (generating == false)
+        {
+            playerLastChunk = playerCurrentChunk;
+            UpdateWorld();
+
+        }
     }
-    private void UpdateWorld()
+    private async void UpdateWorld()
     {
         // I do .ToArray on the returned Ienumerables  because the player is moving in the background, and that causes changes the dictionaries to change. So the result may change from the time the request was called until it is evaluated.
         ChunkPosition[] surroundingPlayerChunks = ChunkUtility.GetChunkPositionsAroundPos(playerCurrentChunk).ToArray();
@@ -81,9 +103,9 @@ public class EndlessEnvController : MonoBehaviour
 
         foreach (ChunkPosition chunkPosition in chunksToDelete)
         {
-            chunkController.RemoveChunk(chunkPosition);
+            chunkController.DeleteChunk(chunkPosition);
         }
-        GenerateWorld(chunksToCreate);
+        await GenerateWorld(chunksToCreate);
     }
     private Task GenerateWorldData(IEnumerable<ChunkPosition> chunkPositions)
     {
@@ -91,9 +113,13 @@ public class EndlessEnvController : MonoBehaviour
         {
             foreach (var pos in chunkPositions)
             {
+                if (taskToken.IsCancellationRequested)
+                    return;
                 chunkController.GenerateChunkData(pos);       
             }
-        });
+        }
+        , taskToken.Token
+        );
     }
     private Task GenerateWorldMeshData(IEnumerable<ChunkPosition> chunkPositions)
     {
@@ -101,9 +127,13 @@ public class EndlessEnvController : MonoBehaviour
         {
             foreach (var pos in chunkPositions)
             {
+                if (taskToken.IsCancellationRequested)
+                    return;
                 chunkController.GenerateChunkMeshData(pos);
             }
-        });
+        }
+        ,taskToken.Token
+        );
     }
    private void PlacePlayer()
     {
@@ -114,10 +144,16 @@ public class EndlessEnvController : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight))
         {
+            player.gameObject.SetActive(true);  
             player.position = hit.point;
             playerLastChunk = new ChunkPosition(hit.point);
         }
         else
-            Debug.LogError("Could not find position to player the player at");
+            UnityEngine.Debug.LogError("Could not find position to player the player at");
    }
+
+    void OnDisable()
+    {
+        taskToken.Cancel();
+    }
 }

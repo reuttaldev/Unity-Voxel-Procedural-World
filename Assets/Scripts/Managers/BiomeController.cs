@@ -14,7 +14,6 @@ public class BiomeController : MonoBehaviour
     public void FillChunkColumn(ChunkData chunk, Vector3 chunkWorldPos, int columnX, int columnZ)
     {
         int groundHeight = GetGroundHeight(BiomeType.Forest,chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ);
-        //Debug.Log("Ground Height is " + groundHeight);
         for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
         {
             chunk[columnX, y, columnZ] = DecideVoxelTypeByY(y, groundHeight);
