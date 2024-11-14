@@ -86,7 +86,7 @@ public class ChunkRenderer : MonoBehaviour
         {
             // access the chunk the voxel is in 
             // add the game object transform to make the voxel poisiton global
-            type = ChunkGenerator.Instance.GetVoxelTypeByGlobalPos(posToCheck + chunkPos.ToWorldPosition());
+            type = ChunkContoller.Instance.GetVoxelTypeByGlobalPos(posToCheck + chunkPos.ToWorldPosition());
         }
         return type;
     }
@@ -114,7 +114,7 @@ public class ChunkRenderer : MonoBehaviour
                     GenerateWaterMeshData(kvp.Key);
                     break;
                 default:
-                    int textureIndex = ChunkGenerator.Instance.voxelsTextureData.data[(int)type].TexturePosition;
+                    int textureIndex = ChunkContoller.Instance.voxelsTextureData.data[(int)type].TexturePosition;
                     GenerateVoxelMeshData(kvp.Key, textureIndex);
                     break;
             }

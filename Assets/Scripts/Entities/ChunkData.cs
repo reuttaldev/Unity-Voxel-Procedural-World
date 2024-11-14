@@ -10,6 +10,7 @@ using static UnityEngine.RuleTile.TilingRuleOutput;
 /// This represents a group of voxels that share the same mesh, which let me render them all at the same time (same GPU call - better optimization than drawing each cube individually)
 /// Each Chunk will be on its own thread to execute calculations of the worlds in parallel 
 /// The actual rendering (calculation creation of the mesh is done at ChunkRenderer.cs) 
+/// This is a data container script and does not represent the chunk gameobject. It does contain a reference to the related game object thought, through the renderer variable
 /// </summary>
 public class ChunkData 
 
@@ -52,4 +53,7 @@ public class ChunkData
             this[new Vector3Int(x, y, z)] = value;
         }
     }
+    // the renderer is attached to the chunk gameobject 
+    public ChunkRenderer renderer = null;
+
 }

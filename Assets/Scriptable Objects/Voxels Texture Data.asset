@@ -12,14 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: Voxels Texture Data
   m_EditorClassIdentifier: Assembly-CSharp::VoxelsTextureData
-  data:
-  - type: 0
-    texturePosition: 00000000
-  - type: 1
-    texturePosition: 01000000
-  - type: 2
-    texturePosition: 020000000300000004000000
-  - type: 3
-    texturePosition: 05000000
-  - type: 4
-    texturePosition: 0600000007000000
+  data: []

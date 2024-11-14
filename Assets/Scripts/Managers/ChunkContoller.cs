@@ -1,11 +1,13 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Xml.Serialization;
 using UnityEngine;
 
-public class ChunkGenerator : SimpleSingleton<ChunkGenerator>   
+public class ChunkContoller : SimpleSingleton<ChunkContoller>   
 {
     [SerializeField]
     private GameObject chunkPrefab;
@@ -20,11 +22,13 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
     public event OnRenderFinishedAction OnRenderFinished;
 
     private Dictionary<ChunkPosition,ChunkData> chunks = new Dictionary<ChunkPosition, ChunkData>();
-    private Dictionary<ChunkPosition,ChunkRenderer> chunksRenderers = new Dictionary<ChunkPosition, ChunkRenderer>();
-    private Stack<ChunkRenderer> freeChunks= new Stack<ChunkRenderer>();
+    // have a pool for the chunk gameobject, since instantiating and destroying game objects is expensive 
+    private Stack<ChunkRenderer> pool= new Stack<ChunkRenderer>();
+    // multithread safe 
+    private static ConcurrentQueue<ChunkPosition> positionsToBeRendered = new ConcurrentQueue<ChunkPosition>();
 
     /// <summary>
-    /// Step 1: Generate the chunk data, i.e which voxel type need to be at each position for that chunk
+    /// Generate the chunk data, i.e which voxel type need to be at each position for that chunk
     /// </summary>
     /// <param name="pos"></param>
     public void GenerateChunkData(ChunkPosition pos)
@@ -44,10 +48,10 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
         }
     }
     /// <summary>
-    /// Step 2: Instantiate (or use from an existing pool) chunk game object
+    /// Instantiate (or use from an existing pool) chunk game object
     /// this must be done on the main thread 
     /// </summary>
-    public void InstantiateChunkGO(ChunkPosition pos)
+    private ChunkRenderer InstantiateChunkGO(ChunkPosition pos)
     {
         ChunkData chunkData = chunks[pos];
         var chunkGO = Instantiate(chunkPrefab, pos.ToWorldPosition(), Quaternion.identity);
@@ -55,45 +59,47 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
         chunkGO.name = pos.ToString();
         // in the data, set the game object we created for easy access 
         ChunkRenderer renderer = chunkGO.GetComponent<ChunkRenderer>();
-        chunksRenderers[pos] = renderer;
+        chunkData.renderer = renderer;
+        return renderer;
     }
 
     // instead of instantiating and deleting the chunks repeatedly, have a pool of them
     public void CreateChunkGO(ChunkPosition newPos)
     {
-        if(freeChunks.Count == 0)
+        ChunkRenderer renderer;
+        if(pool.Count == 0)
         {
-            InstantiateChunkGO(newPos);
-            return;
+            renderer = InstantiateChunkGO(newPos);
+        }   
+        else
+        {
+            renderer = pool.Pop();
+            chunks[newPos].renderer = renderer;
         }
-        var rendrer = freeChunks.Pop();
-        chunksRenderers[newPos] = rendrer;
 
-        var chunkGO = rendrer.gameObject;
+        var chunkGO = renderer.gameObject;
         chunkGO.name = newPos.ToString();
         chunkGO.transform.position = newPos.ToWorldPosition();
     }
     // completely delete the  gameobject
-    public void DeleteChunk(ChunkPosition pos)
+    private void DeleteChunk(ChunkPosition pos)
     {
-        chunks.Remove(pos);
-        var rendrer = chunksRenderers[pos];
-        chunksRenderers.Remove(pos);
+        var rendrer = chunks[pos].renderer;
         Destroy(rendrer);
+        chunks.Remove(pos);
     }
 
     // add the chunk to the pool of free chunks, since it is no longer used at the moment
     public void RemoveChunk(ChunkPosition pos)
     {
-        var rendrer = chunksRenderers[pos];
+        var rendrer = chunks[pos].renderer;
         rendrer.ClearLastGeneration();
-        freeChunks.Push(rendrer);
-        chunksRenderers.Remove(pos);
+        pool.Push(rendrer);
         chunks.Remove(pos);
     }
 
     /// <summary>
-    /// Step 3: Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
+    /// Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
     /// Should be done on a separate thread, as calculations can be long and we do not want to block the main thread.
     /// </summary>
     public void GenerateChunkMeshData(ChunkPosition pos)
@@ -103,36 +109,43 @@ public class ChunkGenerator : SimpleSingleton<ChunkGenerator>
             Debug.LogError("Trying to render mesh data without initializing chunk data first.");
             return;
         }
-        if (!chunksRenderers.ContainsKey(pos))
+        var renderer = chunks[pos].renderer; 
+        if (renderer == null)
         {
-            Debug.LogError("Trying to render mesh data without initializing chunk Game Object first.");
+            Debug.LogError("Trying to generate mesh data without initializing chunk Game Object first.");
             return;
         }
-        var renderer = chunksRenderers[pos];
         renderer.GenerateChunkMeshData(chunks[pos],pos);
-
+        positionsToBeRendered.Enqueue(pos);
     }
 
     /// <summary>
-    /// Step 4: Render the chunk based on the chunk mesh data that was calculated previously.
+    /// Render the chunk based on the chunk mesh data that was calculated previously.
     /// Must be done on the main thread as we are setting the game object's properties 
+    /// So I am doing it spread out over time, to avoid blocking the main thread and to allow other operations to happen while rendering
     /// </summary>
-    public void RenderChunks(ChunkPosition[] poses)
+    private void RenderChunk(ChunkPosition pos)
+    {
+        chunks[pos].renderer.Render();
+    }
+    public void RenderChunks(ChunkPosition[] poses, CancellationToken token)
     {
         for (int i = 0; i < poses.Length; i++)
         {
-            chunksRenderers[poses[i]].Render();
+            token.ThrowIfCancellationRequested();
+            RenderChunk(poses[i]);
         }
         OnRenderFinished?.Invoke();
     }
-    public IEnumerator RenderChunksSequentially(ChunkPosition[] poses)
+    public IEnumerator RenderChunksSequentially(CancellationToken token)
     {
-        for(int i = 0; i< poses.Length; i++)
-        {
-            chunksRenderers[poses[i]].Render();   
+        while (positionsToBeRendered.TryDequeue(out var pos))
+        { 
+            token.ThrowIfCancellationRequested();
+            RenderChunk(pos);
             yield return new WaitForEndOfFrame();
         }
-        OnRenderFinished?.Invoke(); 
+        OnRenderFinished?.Invoke();
     }
     public VoxelType GetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos)
     {
