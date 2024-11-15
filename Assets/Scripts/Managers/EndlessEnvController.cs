@@ -21,7 +21,7 @@ public class EndlessEnvController : MonoBehaviour
     private bool generating = false;
 
     // the position of the chunk the player was on during our last check
-    private ChunkPosition playerCurrentChunk,playerLastChunk; 
+    private ChunkPosition playerCurrentChunk,playerLastChunk = new ChunkPosition(0,0); 
     // as the player moves we need to create the chunks at different locations. this offset tells us where 
     private Vector2Int worldOffset = new Vector2Int(0,0);
 
@@ -33,17 +33,15 @@ public class EndlessEnvController : MonoBehaviour
     {
         var initPoses = ChunkUtility.GetChunkPositionsAroundPos(new ChunkPosition(Vector3.zero)).ToArray();
         await GenerateWorld(initPoses);
-        PlacePlayer();
+        //PlacePlayer();
     }
     private async Task GenerateWorld(ChunkPosition[] poses)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
-        UnityEngine.Debug.Log(poses.Length);
         generating = true;
         // Step 1: Generate the chunk data, i.e which voxel type need to be at each position for that chunk
         // all chunks must be generated and present in the array before creating the meshes, to allow checks on shared faces (i.e., check if a face needs to be visible or occluded)
         await GenerateWorldData(poses);
-        UnityEngine.Debug.Log("finished generating world data");
         // Step 2: Instantiate (or use from an existing pool) chunk game object, so we have something to apply the mesh to
         // must be done on main thread since we are changing game object properties
         foreach (var pos in poses)
@@ -147,9 +145,9 @@ public class EndlessEnvController : MonoBehaviour
         if (Physics.Raycast(EnvironmentConstants.worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight))
         {
             player.gameObject.SetActive(true);
-            //player.position = hit.point;
+            player.position = hit.point;
             UnityEngine.Debug.Log("player position is " + hit.point);
-            //playerLastChunk = new ChunkPosition(hit.point);
+            playerLastChunk = new ChunkPosition(hit.point);
         }
         else
             UnityEngine.Debug.LogError("Could not find position to player the player at");

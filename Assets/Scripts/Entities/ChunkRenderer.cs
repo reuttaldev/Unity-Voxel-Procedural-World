@@ -86,7 +86,6 @@ public class ChunkRenderer : MonoBehaviour
         {
             // access the chunk the voxel is in 
             // add the game object transform to make the voxel poisiton global
-            Debug.Log(posToCheck);
             type = ChunkContoller.Instance.GetVoxelTypeByGlobalPos(posToCheck + chunkPos.ToWorldPosition());
         }
         return type;
