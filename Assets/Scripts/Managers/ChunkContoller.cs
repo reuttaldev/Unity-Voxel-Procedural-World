@@ -22,10 +22,13 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     public event OnRenderFinishedAction OnRenderFinished;
 
     private Dictionary<ChunkPosition,ChunkData> chunks = new Dictionary<ChunkPosition, ChunkData>();
+    public ChunkPosition[] CurrentChunkPositions => chunks.Keys.ToArray();
     // have a pool for the chunk gameobject, since instantiating and destroying game objects is expensive 
     private Stack<ChunkRenderer> pool= new Stack<ChunkRenderer>();
+
     // multithread safe 
     private static ConcurrentQueue<ChunkPosition> positionsToBeRendered = new ConcurrentQueue<ChunkPosition>();
+    bool rendering = false;
 
     /// <summary>
     /// Generate the chunk data, i.e which voxel type need to be at each position for that chunk
@@ -57,10 +60,7 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
         var chunkGO = Instantiate(chunkPrefab, pos.ToWorldPosition(), Quaternion.identity);
         chunkGO.transform.SetParent(chunksParent);
         chunkGO.name = pos.ToString();
-        // in the data, set the game object we created for easy access 
-        ChunkRenderer renderer = chunkGO.GetComponent<ChunkRenderer>();
-        chunkData.renderer = renderer;
-        return renderer;
+        return chunkGO.GetComponent<ChunkRenderer>();
     }
 
     // instead of instantiating and deleting the chunks repeatedly, have a pool of them
@@ -74,9 +74,9 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
         else
         {
             renderer = pool.Pop();
-            chunks[newPos].renderer = renderer;
         }
-
+        // in the data, set the game object we created for easy access 
+        chunks[newPos].renderer = renderer;
         var chunkGO = renderer.gameObject;
         chunkGO.name = newPos.ToString();
         chunkGO.transform.position = newPos.ToWorldPosition();
@@ -119,38 +119,33 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
         positionsToBeRendered.Enqueue(pos);
     }
 
-    /// <summary>
-    /// Render the chunk based on the chunk mesh data that was calculated previously.
-    /// Must be done on the main thread as we are setting the game object's properties 
-    /// So I am doing it spread out over time, to avoid blocking the main thread and to allow other operations to happen while rendering
-    /// </summary>
-    private void RenderChunk(ChunkPosition pos)
+    private void Update()
     {
-        chunks[pos].renderer.Render();
-    }
-    public void RenderChunks(ChunkPosition[] poses, CancellationToken token)
-    {
-        for (int i = 0; i < poses.Length; i++)
+        //Render the chunk based on the chunk mesh data that was calculated, if any is ready 
+        // Must be done on the main thread as we are setting the game object's properties 
+        // So I am doing it spread out over time, to avoid blocking the main thread and to allow other operations to happen while rendering
+        if (!rendering && positionsToBeRendered.TryDequeue(out var pos))
         {
-            token.ThrowIfCancellationRequested();
-            RenderChunk(poses[i]);
+            //StartCoroutine(RenderChunksSequentially());
+            chunks[pos].renderer.Render();
         }
-        OnRenderFinished?.Invoke();
     }
-    public IEnumerator RenderChunksSequentially(CancellationToken token)
+    public IEnumerator RenderChunksSequentially()
     {
+        rendering = true;
         while (positionsToBeRendered.TryDequeue(out var pos))
-        { 
-            token.ThrowIfCancellationRequested();
-            RenderChunk(pos);
+        {
+            Debug.Log("rendeing");
+            //token.ThrowIfCancellationRequested();
+            chunks[pos].renderer.Render();
             yield return new WaitForEndOfFrame();
         }
-        OnRenderFinished?.Invoke();
+        rendering = false;
     }
     public VoxelType GetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos)
     {
-        if (voxelGlobalPos.y < 0)
-            return VoxelType.Empty;
+        //if (voxelGlobalPos.y < 0)
+            //return VoxelType.Empty;
         // get the position of the chunk that contains this voxel
         var chunkPos = new ChunkPosition(voxelGlobalPos);
         if (chunkPos.IsValid())

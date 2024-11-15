@@ -34,7 +34,7 @@ public struct ChunkPosition
     }
     public bool IsValid()
     {
-        return x < EnvironmentConstants.worldSizeInChunks && z < EnvironmentConstants.worldSizeInChunks && x >= 0 && z >= 0;
+        return x < EnvironmentConstants.worldSizeInChunks/2 && z < EnvironmentConstants.worldSizeInChunks/2 && x >= 0 && z >= 0;
 
     }
 }

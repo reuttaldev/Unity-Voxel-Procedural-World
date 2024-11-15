@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.PlayerSettings;
 
 
 public class EndlessEnvController : MonoBehaviour
@@ -26,22 +27,23 @@ public class EndlessEnvController : MonoBehaviour
 
     // following https://learn.microsoft.com/en-us/dotnet/standard/parallel-programming/task-cancellation
     CancellationTokenSource taskTokenSource = new CancellationTokenSource();
-    CancellationToken taskToken;
+
 
     private async void Start()
     {
-        var initPoses = ChunkUtility.GetInitChunksPositions();
+        var initPoses = ChunkUtility.GetChunkPositionsAroundPos(new ChunkPosition(Vector3.zero)).ToArray();
         await GenerateWorld(initPoses);
         PlacePlayer();
     }
     private async Task GenerateWorld(ChunkPosition[] poses)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
-
+        UnityEngine.Debug.Log(poses.Length);
         generating = true;
         // Step 1: Generate the chunk data, i.e which voxel type need to be at each position for that chunk
         // all chunks must be generated and present in the array before creating the meshes, to allow checks on shared faces (i.e., check if a face needs to be visible or occluded)
         await GenerateWorldData(poses);
+        UnityEngine.Debug.Log("finished generating world data");
         // Step 2: Instantiate (or use from an existing pool) chunk game object, so we have something to apply the mesh to
         // must be done on main thread since we are changing game object properties
         foreach (var pos in poses)
@@ -51,11 +53,12 @@ public class EndlessEnvController : MonoBehaviour
         //Step 3: Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
         // must be done after generating the game objects since the renderer is a component of the game object.
         // need to change this- so it can be done in parallel 
-        var meshGeneration = GenerateWorldMeshData(poses);
+        var meshGeneration= GenerateWorldMeshData(poses);
 
         /// Step 4: Render the chunk based on the chunk mesh data that was calculated previously.
-        /// again,must be done on the main thread
-        StartCoroutine(chunkController.RenderChunksSequentially(taskToken));
+        /// again,must be done on the main thread. 
+        /// It will start automatically in chunk controller Update method when there is something to render
+        //StartCoroutine(chunkController.RenderChunksSequentially(taskToken));
         
         await meshGeneration;
         generating = false;
@@ -69,12 +72,10 @@ public class EndlessEnvController : MonoBehaviour
     /// </summary>
     private async void Update()
     {
-        if (Mouse.current.rightButton.isPressed)
+        if(Keyboard.current.vKey.isPressed)
         {
-            var initPoses = ChunkUtility.GetInitChunksPositions();
-            await GenerateWorld(initPoses);
+            ReGenerateWorld();
         }
-
         // wait for seconds
         time += Time.deltaTime;
         if (time <= restDuration)
@@ -82,14 +83,10 @@ public class EndlessEnvController : MonoBehaviour
         time = 0;
 
         playerCurrentChunk = new ChunkPosition(player.position);
-        // we remain on the same chunk, no need to generate more 
-        if (Equals(playerCurrentChunk, playerLastChunk))
+        if (!generating && !Equals(playerCurrentChunk, playerLastChunk))
         {
-            return;
-        }
-        // generate a new env around the player
-        if (generating == false)
-        {
+            UnityEngine.Debug.Log(playerLastChunk);
+            UnityEngine.Debug.Log(playerCurrentChunk);
             playerLastChunk = playerCurrentChunk;
             UpdateWorld();
         }
@@ -121,11 +118,10 @@ public class EndlessEnvController : MonoBehaviour
         {
             foreach (var pos in chunkPositions)
             {
-                taskToken.ThrowIfCancellationRequested();
                 chunkController.GenerateChunkData(pos);
             }
         }
-        , taskToken
+        , taskTokenSource.Token
         );
     }
     /// <summary>
@@ -138,32 +134,42 @@ public class EndlessEnvController : MonoBehaviour
         {
             foreach (var pos in chunkPositions)
             {
-                taskToken.ThrowIfCancellationRequested();
                 chunkController.GenerateChunkMeshData(pos);
             }
         }
-        ,taskToken
+        , taskTokenSource.Token
         );
     }
     private void PlacePlayer()
     {
-        float midX = (EnvironmentConstants.worldSizeInChunks * EnvironmentConstants.chunkWidth)/2;
-        float midZ = (EnvironmentConstants.worldSizeInChunks * EnvironmentConstants.chunkDepth)/2;
-        Vector3 worldMidPoint = new Vector3(midX, EnvironmentConstants.chunkHeight+10 , midZ);
         // need to find the y position, to place the player at 
         RaycastHit hit;
-        if (Physics.Raycast(worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight))
+        if (Physics.Raycast(EnvironmentConstants.worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight))
         {
-            player.gameObject.SetActive(true);  
-            player.position = hit.point;
-            playerLastChunk = new ChunkPosition(hit.point);
+            player.gameObject.SetActive(true);
+            //player.position = hit.point;
+            UnityEngine.Debug.Log("player position is " + hit.point);
+            //playerLastChunk = new ChunkPosition(hit.point);
         }
         else
             UnityEngine.Debug.LogError("Could not find position to player the player at");
    }
 
+    // for testing 
+    private async void ReGenerateWorld()
+    {
+        ChunkPosition[] current = chunkController.CurrentChunkPositions;
+        UnityEngine.Debug.Log(current.Length);
+        foreach (ChunkPosition chunkPosition in current)
+        {
+            chunkController.RemoveChunk(chunkPosition);
+        }
+        await GenerateWorld(current);
+    }
+
     void OnDisable()
     {
         taskTokenSource.Cancel();
+        taskTokenSource.Dispose();
     }
 }

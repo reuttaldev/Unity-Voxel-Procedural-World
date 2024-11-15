@@ -31,11 +31,3 @@ public struct Voxel
     /// choose a random texture  
     public int TexturePosition => texturePosition[new System.Random().Next(0, texturePosition.Length)];
 }
-[CreateAssetMenu(fileName = "Voxels Texture Data", menuName = "Scriptable Objects/Voxels Texture Data")]
-public class VoxelsTextureData : ScriptableObject
-{
-    [SerializeField]
-    /// ordered by the VoxelType:: byte 
-    public List<Voxel> data; 
-
-}

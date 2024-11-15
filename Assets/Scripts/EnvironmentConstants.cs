@@ -11,6 +11,7 @@ public static class EnvironmentConstants
     public const int chunkWidth = 15, chunkDepth=15, chunkHeight=50;
     public const int worldSizeInChunks = 10;
     public static readonly int chunkSize = chunkWidth * chunkDepth * chunkHeight;
+    public static readonly Vector3 worldMidPoint = new Vector3((worldSizeInChunks)* chunkWidth /2, chunkHeight + 10, ((worldSizeInChunks) * chunkDepth / 2));
     public const float waterScale = 0.3f;
     public static readonly float waterThreshold = waterScale * chunkHeight;
     public const float noiseScale = 0.02f;
