@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97788f3b721669149953e5f0932a7c44, type: 3}
+  m_Name: Forest Noise Settings
+  m_EditorClassIdentifier: 
+  zoom: 0.01
+  zoomOffset: 0.01
+  noiseScale: 0.01
+  noiseOffset: -100
+  octaves: 5
+  amplitudeMultiplier: 0.5
+  redistributionMultiplier: 1
+  expo: 5

@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,33 +8,45 @@ using UnityEngine;
 public class BiomeController : MonoBehaviour
 {
     [SerializeField]
-    private List<BiomeSettings> biomesNoiseSettings; 
+    private List<BiomeSettings> biomesSettings;
+    [SerializeField]
+    private List<NoiseSettings> treesNoiseSettings;
 
-    public void FillChunkColumn(ChunkData chunk, Vector3 chunkWorldPos, int columnX, int columnZ)
+    public BiomeType GetTypeOfChunk(Vector3 chunkWorldPos)
     {
-        int groundHeight = GetGroundHeight(BiomeType.Forest,chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ);
+        return BiomeType.Forest;
+    }
+    public void FillChunkColumn(ChunkData chunk, BiomeType type, Vector3 chunkWorldPos, int columnX, int columnZ)
+    {
+        var settings = biomesSettings[(byte)type];
+        int groundHeight = NoiseUtility.GetNoise(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ, settings.noise);
         for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
         {
-            chunk[columnX, y, columnZ] = DecideVoxelTypeByY(y, groundHeight);
+            chunk[columnX, y, columnZ] = DecideVoxelTypeByY(y, groundHeight, settings);
         }
     }
-
-    private int GetGroundHeight(BiomeType type, float x, float z)
+    public void PlaceTrees(TreeData data, BiomeType type, Vector3 chunkWorldPos, int columnX, int columnZ)
     {
-        float noise = NoiseUtility.OctavePerlin(x, z, biomesNoiseSettings[(byte)type]);
-        noise = NoiseUtility.Redistribution(noise, biomesNoiseSettings[(byte)type]);
-        return (int)NoiseUtility.NormalizeToChunkHeight(noise);
-    }
+        var noiseSettings = treesNoiseSettings[(byte)type];
+        var settings = biomesSettings[(byte)type];
 
+        // get a random noise at x,z position
+        int treeThreshold = NoiseUtility.GetNoise(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ, noiseSettings);
+        // if the noise is greater than a pre-set value (tree threshold) for this biome, then add a tree there
+        if(treeThreshold > settings.treeThreshold)
+        {
+
+        }
+    }
     /// Determines the appropriate VoxelType based on the Y coordinate (height) of the voxel and the biome it is in.
-    private VoxelType DecideVoxelTypeByY(int y, int groundPos)
+    private VoxelType DecideVoxelTypeByY(int y, int groundPos, BiomeSettings biomeSettings)
     {
         if (y > groundPos)
         {
-            if (y < EnvironmentConstants.waterThreshold)
+            if (y <biomeSettings.waterThreshold)
             {
                 if (y == groundPos +1)
-                    return VoxelType.Dark_Sand;
+                    return biomeSettings.nearWaterVoxel;
                 return VoxelType.Water;
             }
             else
@@ -43,10 +54,10 @@ public class BiomeController : MonoBehaviour
         }
         else if (y < groundPos)
         {
-            return VoxelType.Light_Sand;
+            return biomeSettings.underGroundVoxel;
         }
-        // equals
-        return VoxelType.Grass;
+        // equals = ground position
+        return biomeSettings.topVoxel;
     }
 }
 

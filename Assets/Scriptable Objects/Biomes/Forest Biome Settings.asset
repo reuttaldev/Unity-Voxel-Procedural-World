@@ -12,16 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 508edd09479d470428b63f7f29159abb, type: 3}
   m_Name: Forest Biome Settings
   m_EditorClassIdentifier: 
-  type: 1
-  zoom: 0.01
-  zoomOffset: 0.01
-  noiseScale: 0.01
-  noiseOffset: -100
-  octaves: 5
-  amplitudeMultiplier: 0.5
-  redistributionMultiplier: 1
-  expo: 1
-  waterScale: 0.3
+  noise: {fileID: 11400000, guid: ccf76e44ea74dff4da79ac50b141aa1e, type: 2}
+  waterScale: 0
+  waterThreshold: 0
   topVoxel: 0
-  underGroundVoxel: 4
-  underWaterVoxel: 2
+  underGroundVoxel: 3
+  nearWaterVoxel: 3
+  treeThreshold: 0.5

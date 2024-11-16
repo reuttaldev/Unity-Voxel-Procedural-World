@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class NoiseUtility
 {
-    public static float OctavePerlin(float x, float z, BiomeSettings settings)
+    public static float OctavePerlin(float x, float z, NoiseSettings settings)
     {
         x = x * settings.zoom + settings.zoomOffset;
         z = z * settings.zoom + settings.zoomOffset;
@@ -25,13 +25,19 @@ public static class NoiseUtility
         return total / amplitudeSum;
     }
 
-    public static float Redistribution(float noise, BiomeSettings settings)
+    public static float Redistribution(float noise, NoiseSettings settings)
     {
         return Mathf.Pow(noise *settings.redistributionMultiplier, settings.expo);
     }
     public static int NormalizeToChunkHeight(float n)
     {
         return (int)(n * EnvironmentConstants.chunkHeight);
+    }
+    public static int GetNoise(float x, float z, NoiseSettings settings)
+    {
+        float noise = NoiseUtility.OctavePerlin(x, z, settings);
+        noise = NoiseUtility.Redistribution(noise,settings);
+        return (int)NoiseUtility.NormalizeToChunkHeight(noise);
     }
 
 

@@ -9,19 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 508edd09479d470428b63f7f29159abb, type: 3}
-  m_Name: Desert Biome Settings
+  m_Script: {fileID: 11500000, guid: 97788f3b721669149953e5f0932a7c44, type: 3}
+  m_Name: Trees Forest Noise Settings
   m_EditorClassIdentifier: 
-  type: 0
   zoom: 0.01
   zoomOffset: 0.01
   noiseScale: 0.01
-  noiseOffset: -100
+  noiseOffset: -7
   octaves: 5
   amplitudeMultiplier: 0.5
-  redistributionMultiplier: 2
+  redistributionMultiplier: 1
   expo: 5
-  waterScale: 0.2
-  topVoxel: 4
-  underGroundVoxel: 2
-  underWaterVoxel: 3

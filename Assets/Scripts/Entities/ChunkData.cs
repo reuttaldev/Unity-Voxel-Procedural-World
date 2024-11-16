@@ -55,5 +55,4 @@ public class ChunkData
     }
     // the renderer is attached to the chunk gameobject 
     public ChunkRenderer renderer = null;
-
 }

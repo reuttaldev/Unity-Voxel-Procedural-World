@@ -42,11 +42,12 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     }
     private void FillChunkValues(ChunkData chunk, Vector3 chunkWorldPos)
     {
+        var chunkType = biomeController.GetTypeOfChunk(chunkWorldPos);
         for (int x = 0; x < EnvironmentConstants.chunkWidth; x++)
         {
             for (int z = 0; z < EnvironmentConstants.chunkDepth; z++)
             {
-                biomeController.FillChunkColumn(chunk, chunkWorldPos, x, z);
+                biomeController.FillChunkColumn(chunk, chunkType, chunkWorldPos, x, z);
             }
         }
     }
