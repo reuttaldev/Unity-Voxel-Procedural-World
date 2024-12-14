@@ -10,8 +10,9 @@ public class NoiseSettings : ScriptableObject
     public float zoomOffset = 0.01f;
     public float noiseScale = 0.01f;
     public float noiseOffset = -100;
+    // noise layers to combine 
     public int octaves = 5;
     public float amplitudeMultiplier = 0.5f;
-    public float redistributionMultiplier = 1.0f;
-    public float expo = 5;
+    public float intensity = 1.0f;
+    public float smoothness = 5;
 }

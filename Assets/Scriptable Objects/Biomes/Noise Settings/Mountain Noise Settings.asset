@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 97788f3b721669149953e5f0932a7c44, type: 3}
-  m_Name: Forest Noise Settings
+  m_Name: Mountain Noise Settings
   m_EditorClassIdentifier: 
   zoom: 0.01
   zoomOffset: 0.01
   noiseScale: 0.01
-  noiseOffset: 100
-  octaves: 8
-  amplitudeMultiplier: 0.3
-  intensity: 1
-  smoothness: 4
+  noiseOffset: -100
+  octaves: 5
+  amplitudeMultiplier: 0.5
+  redistributionMultiplier: 1
+  expo: 1

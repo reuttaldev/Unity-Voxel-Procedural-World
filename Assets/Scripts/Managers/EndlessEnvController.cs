@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEditor.PlayerSettings;
+using Debug = UnityEngine.Debug;
 
 
 public class EndlessEnvController : MonoBehaviour
@@ -21,7 +22,7 @@ public class EndlessEnvController : MonoBehaviour
     private bool generating = false;
 
     // the position of the chunk the player was on during our last check
-    private ChunkPosition playerCurrentChunk,playerLastChunk = new ChunkPosition(0,0); 
+    private ChunkPosition playerCurrentChunk,playerLastChunk; 
     // as the player moves we need to create the chunks at different locations. this offset tells us where 
     private Vector2Int worldOffset = new Vector2Int(0,0);
 
@@ -29,11 +30,14 @@ public class EndlessEnvController : MonoBehaviour
     CancellationTokenSource taskTokenSource = new CancellationTokenSource();
 
 
-    private async void Start()
+    private void Start()
     {
         var initPoses = ChunkUtility.GetChunkPositionsAroundPos(new ChunkPosition(Vector3.zero)).ToArray();
-        await GenerateWorld(initPoses);
-        //PlacePlayer();
+        GenerateWorld(initPoses);
+        var middlePos = initPoses[0].ToWorldPosition() + new Vector3(EnvironmentConstants.chunkWidth/2,15, EnvironmentConstants.chunkDepth / 2);
+        player.position = middlePos;
+        player.gameObject.SetActive(true);  
+        playerCurrentChunk = new ChunkPosition(middlePos);
     }
     private async Task GenerateWorld(ChunkPosition[] poses)
     {
@@ -62,7 +66,7 @@ public class EndlessEnvController : MonoBehaviour
         generating = false;
 
         stopwatch.Stop();
-        UnityEngine.Debug.Log($"Generation took: {stopwatch.ElapsedMilliseconds} ms");
+        Debug.Log($"Generation took: {stopwatch.ElapsedMilliseconds} ms");
     }
 
     /// <summary>
@@ -83,8 +87,6 @@ public class EndlessEnvController : MonoBehaviour
         playerCurrentChunk = new ChunkPosition(player.position);
         if (!generating && !Equals(playerCurrentChunk, playerLastChunk))
         {
-            UnityEngine.Debug.Log(playerLastChunk);
-            UnityEngine.Debug.Log(playerCurrentChunk);
             playerLastChunk = playerCurrentChunk;
             UpdateWorld();
         }
@@ -140,7 +142,7 @@ public class EndlessEnvController : MonoBehaviour
     }
     private void PlacePlayer()
     {
-        // need to find the y position, to place the player at 
+      /*  // need to find the y position, to place the player at 
         RaycastHit hit;
         if (Physics.Raycast(EnvironmentConstants.worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight))
         {
@@ -150,7 +152,10 @@ public class EndlessEnvController : MonoBehaviour
             playerLastChunk = new ChunkPosition(hit.point);
         }
         else
+        {
             UnityEngine.Debug.LogError("Could not find position to player the player at");
+            player.position = EnvironmentConstants.worldMidPoint;
+        }*/
    }
 
     // for testing 

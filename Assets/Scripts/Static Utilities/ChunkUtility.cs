@@ -5,6 +5,7 @@ using UnityEngine;
 
 public static class ChunkUtility
 {
+    static (int, int)[] directions = new (int, int)[4] { (0, 1), (1, 0), (0, -1), (-1, 0) }; // up, right,down,left
     public static Vector3Int GlobalVoxelPositionToLocal(ChunkPosition containingChunkPos, Vector3 globalVoxelPos)
     {
         var chunkWorldPos = containingChunkPos.ToWorldPosition();
@@ -24,13 +25,12 @@ public static class ChunkUtility
 
     /// <summary>
     /// Returns a list of chunk positions that are surrounding the given pos
-    /// elements are being generated on the fly, can return Ienumerable safley
+    /// starting from the middle and going outwards 
+    /// elements are being generated on the fly, can return Ienumerable safely
     /// algorithm inspired from this thread: https://stackoverflow.com/questions/33684970/print-2-d-array-in-clockwise-expanding-spiral-from-center
     /// </summary>
     public static IEnumerable<ChunkPosition> GetChunkPositionsAroundPos(ChunkPosition pos)
     {
-        // generate the positions around the given pos, starting from the middle and going outwards
-        (int, int)[] directions = new (int, int)[4] { (0, 1), (1, 0), (0, -1), (-1, 0) }; // up, right,down,left
         int n = EnvironmentConstants.worldSizeInChunks;
         int center = n % 2 == 0 ? n / 2 - 1 : n / 2; // account for even and odd n
         int x= center, z = center, d = 0, stepLength = 1, stepCounter = 0;
@@ -38,8 +38,9 @@ public static class ChunkUtility
         {
             for (int i = 0; i < stepLength; i++)
             {
-                yield return new ChunkPosition(x+pos.x-center,z+pos.z-center);
-                x += directions[d].Item1;
+                // the coordinates you return will match where they will be placed in the world, with respect to chunk size. So (0,0) will be at world (0,0), (0,1) will be at (0,chunksize) and so on
+                var nowPos = new ChunkPosition(x +pos.x-center, z + pos.z-center);
+                yield return nowPos; x += directions[d].Item1;
                 z += directions[d].Item2;
             }
             d++;

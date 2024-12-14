@@ -27,7 +27,7 @@ public static class NoiseUtility
 
     public static float Redistribution(float noise, NoiseSettings settings)
     {
-        return Mathf.Pow(noise *settings.redistributionMultiplier, settings.expo);
+        return Mathf.Pow(noise *settings.intensity, settings.smoothness);
     }
     public static int NormalizeToChunkHeight(float n)
     {

@@ -54,7 +54,7 @@ public class BiomeController : MonoBehaviour
         }
         else if (y < groundPos)
         {
-            return biomeSettings.underGroundVoxel;
+            return biomeSettings.underWaterVoxel;
         }
         // equals = ground position
         return biomeSettings.topVoxel;

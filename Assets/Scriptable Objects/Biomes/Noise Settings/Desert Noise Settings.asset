@@ -18,5 +18,5 @@ MonoBehaviour:
   noiseOffset: -100
   octaves: 5
   amplitudeMultiplier: 0.5
-  redistributionMultiplier: 1
-  expo: 5
+  intensity: 1
+  smoothness: 3

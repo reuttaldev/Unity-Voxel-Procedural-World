@@ -12,9 +12,10 @@ public class BiomeSettings : ScriptableObject
     [Header("Appearance")]
     [SerializeField]
     private float waterScale = 0.3f; // how much % out of the chunk height should be with water
+    [HideInInspector]
     public float waterThreshold;
     public VoxelType topVoxel;
-    public VoxelType underGroundVoxel;
+    public VoxelType underWaterVoxel;
     public VoxelType nearWaterVoxel;
 
     [Header("Trees")]
@@ -29,5 +30,7 @@ public class BiomeSettings : ScriptableObject
 public enum BiomeType : byte
 {
     Desert,
-    Forest
+    Forest,
+    Mountain,
+    Beach
 }
