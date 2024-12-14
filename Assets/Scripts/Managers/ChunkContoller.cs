@@ -149,12 +149,16 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
             //return VoxelType.Empty;
         // get the position of the chunk that contains this voxel
         var chunkPos = new ChunkPosition(voxelGlobalPos);
-        if (chunkPos.IsValid())
+        // check if this chunk is in our environment 
+        if (chunks.ContainsKey(chunkPos))
         {
             var voxelLocalPos = ChunkUtility.GlobalVoxelPositionToLocal(chunkPos, voxelGlobalPos);
             return chunks[chunkPos][voxelLocalPos];
         }
-        return VoxelType.Empty;
+        // check if the position is at the end of the currently existing world.
+        // if it is, then there is not reason to render it since a new chunk will be generated there sometime.
+        // this avoids rendering the chunks (that are procedurally generated) walls 
+        return VoxelType.Grass_Mix  ;
     }
     /// <summary>
     /// return the elements from l that are not found in our chunk dictionary, order by distance (so we render the chunks that are closest to the player first). 

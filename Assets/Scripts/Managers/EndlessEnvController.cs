@@ -140,23 +140,6 @@ public class EndlessEnvController : MonoBehaviour
         , taskTokenSource.Token
         );
     }
-    private void PlacePlayer()
-    {
-      /*  // need to find the y position, to place the player at 
-        RaycastHit hit;
-        if (Physics.Raycast(EnvironmentConstants.worldMidPoint, Vector3.down, out hit, EnvironmentConstants.chunkHeight))
-        {
-            player.gameObject.SetActive(true);
-            player.position = hit.point;
-            UnityEngine.Debug.Log("player position is " + hit.point);
-            playerLastChunk = new ChunkPosition(hit.point);
-        }
-        else
-        {
-            UnityEngine.Debug.LogError("Could not find position to player the player at");
-            player.position = EnvironmentConstants.worldMidPoint;
-        }*/
-   }
 
     // for testing 
     private async void ReGenerateWorld()

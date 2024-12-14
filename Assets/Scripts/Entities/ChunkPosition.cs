@@ -32,9 +32,5 @@ public struct ChunkPosition
     {
         return new Vector3Int(x * EnvironmentConstants.chunkWidth, 0, z * EnvironmentConstants.chunkDepth);
     }
-    public bool IsValid()
-    {
-        return x < EnvironmentConstants.worldSizeInChunks/2 && z < EnvironmentConstants.worldSizeInChunks/2 && x >= 0 && z >= 0;
 
-    }
 }

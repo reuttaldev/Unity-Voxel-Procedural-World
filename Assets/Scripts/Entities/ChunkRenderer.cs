@@ -82,6 +82,8 @@ public class ChunkRenderer : MonoBehaviour
             type = data[posToCheck];
         }
         // meaning the voxel that requires checking is not in this specific chunk
+        // and we need to get info about a chunk that is not related to this render instance. 
+        // refer to Chunk Controller to get this info
         else 
         {
             // access the chunk the voxel is in 

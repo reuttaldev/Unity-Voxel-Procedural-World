@@ -52,6 +52,7 @@ public class BiomeController : MonoBehaviour
             else
                 return VoxelType.Empty;
         }
+        // voxels that are under ground pos cannot be empty, because then the pieces that are in ground pos think there is nothing underneath them and should be rendered 
         else if (y < groundPos)
         {
             return biomeSettings.underWaterVoxel;
