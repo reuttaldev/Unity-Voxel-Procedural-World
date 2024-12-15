@@ -34,6 +34,7 @@ public static class EnvironmentConstants
     /// </summary>
     public static readonly int[,] voxelFaces = new int[facesCount, vertexNoDupCount] {
 
+        // denote corners bottom left,bottom right, upper right and upper left as 0,1,2,3 respectively. 
         // the original back face is: 0,3,1,1,3,2, but since there is duplicate vertices there is no point to include those. 
         {0, 3, 1, 2}, // Back Face
 		{5, 6, 4, 7 }, // Front Face
@@ -44,6 +45,7 @@ public static class EnvironmentConstants
 
 	};
 
+    // Used for accessing neighboring (adjacent) faces
     public static readonly Vector3Int[] faceChecks = new Vector3Int[facesCount] 
     {
         // backwards
@@ -60,7 +62,16 @@ public static class EnvironmentConstants
         new Vector3Int(1, 0, 0),
 
     };
+    // Remember vertices are stored and processed in the following order:   bottom left,upper left, bottom right, upper right      
+    public static readonly Vector2Int[] verticesOrder = new Vector2Int[vertexNoDupCount]
+{
+        // bottom left corner
+        new Vector2Int (0, 0),
+        new Vector2Int (0, 1),
+        new Vector2Int (1, 0),
+        // top right corner
+        new Vector2Int (1,1)
 
-
+};
 
 }

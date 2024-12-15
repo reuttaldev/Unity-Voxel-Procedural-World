@@ -8,7 +8,7 @@ public class TreeData
     public Vector3Int localTrunkPosition { get; }
     public VoxelType type { get; }
     public int trunkHeight { get; }
-    public TreeData(VoxelType type, Vector3Int pos, ChunkData p, int h)
+    public TreeData(VoxelType trunkType, VoxelType leafType, Vector3Int pos, ChunkData p, int h)
     {
         this.type = type;
         localTrunkPosition = pos;

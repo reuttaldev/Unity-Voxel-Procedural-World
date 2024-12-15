@@ -14,13 +14,12 @@ public class TreeGenerator : MonoBehaviour
     // After chunks data has been filled, we can go ahead and construct the tree. Fill in data to set the shape of it, then render 
     public void AddTree(ChunkData chunk, Vector3Int localPos, VoxelType type,float noise)
     {
-
         // get the height of the trunk randonly. Using noise and not random because a random (even with a seed) might not give us the same number, since we don't know if we will get to this part of code at exactly the same point in different machines- some are faster than others.
         // but noise will always give us the same value for the same position
         int height = (int)(noise * maxTrunkHeight); 
         if(height > minTrunkHeight)
             height = minTrunkHeight;
-        treesToBeGenerated.Enqueue(new TreeData(type,localPos,chunk,height));
+        treesToBeGenerated.Enqueue(new TreeData(type,type,localPos,chunk,height));
     }
 
     public void GenerateTreesData()
@@ -38,7 +37,7 @@ public class TreeGenerator : MonoBehaviour
         // create the trunk
         for (int i = 0; i < data.trunkHeight; i++)
         {
-            chunkData[pos.x,pos.y+i,pos.z] = VoxelType.TreeTrunk;
+            //chunkData[pos.x,pos.y+i,pos.z] = dat;
         }
         // create the leaves. Here, some of the positions may be outside of the tree parent chunk.
 

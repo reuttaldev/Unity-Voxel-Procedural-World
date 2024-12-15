@@ -188,6 +188,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b621ebad495aefc499a32334a6a7e190, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxTrunkHeight: 7
+  minTrunkHeight: 2
 --- !u!4 &518153318
 Transform:
   m_ObjectHideFlags: 0
@@ -504,6 +506,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 904817027}
   chunkController: {fileID: 1029459940}
+  treeGenerator: {fileID: 518153317}
   restDuration: 2
   time: 0
 --- !u!4 &1380965388

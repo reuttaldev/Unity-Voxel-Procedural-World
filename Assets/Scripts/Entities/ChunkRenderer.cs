@@ -30,8 +30,9 @@ public class ChunkRenderer : MonoBehaviour
         waterMesh = new WaterMesh();
     }
 
-    private void GenerateVoxelMeshData(Vector3Int relativePos, int textureIndex)
+    private void GenerateVoxelMeshData(Vector3Int relativePos,VoxelType type)
     {
+        VoxelData v = ChunkContoller.Instance.voxelsTextureData.GetVoxelData(type);
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
             if (FaceHasNeighbor(relativePos, face))
@@ -45,7 +46,8 @@ public class ChunkRenderer : MonoBehaviour
             // need 6 triangle points per face, but only 4 vertices are added (2 are duplicates).
             // add triangles after the loop to ensure they reference all vertices in the correct order, including duplicates.
             collisionMesh.AddTriangles();
-            collisionMesh.AddUV(TextureUtility.GetUvsForAtlas(face, textureIndex));
+            var faceUvs = TextureUtility.GetTexturePositionInAtlas(face, v);
+            collisionMesh.AddUV(faceUvs);
         }
     }
 
@@ -63,7 +65,7 @@ public class ChunkRenderer : MonoBehaviour
                 waterMesh.AddVertices(vertexInFace + relativePos);
             }
             waterMesh.AddTriangles();
-            waterMesh.AddUV(TextureUtility.GetUvsForTexture(face));
+            //waterMesh.AddUV(TextureUtility.GetUvsForAtlas(face));
         }
     }
 
@@ -114,11 +116,10 @@ public class ChunkRenderer : MonoBehaviour
                 case VoxelType.Empty:
                     continue;
                 case VoxelType.Water:
-                    GenerateWaterMeshData(kvp.Key);
+                    //GenerateWaterMeshData(kvp.Key);
                     break;
                 default:
-                    int textureIndex = ChunkContoller.Instance.voxelsTextureData.data[(int)type].TexturePosition;
-                    GenerateVoxelMeshData(kvp.Key, textureIndex);
+                    GenerateVoxelMeshData(kvp.Key,kvp.Value);
                     break;
             }
         }

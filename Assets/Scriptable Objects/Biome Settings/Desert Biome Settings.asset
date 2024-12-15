@@ -16,7 +16,7 @@ MonoBehaviour:
   treeNoise: {fileID: 11400000, guid: c1e181636d43f1946a08fa66a5575ad4, type: 2}
   waterScale: 0.1
   waterThreshold: 10
-  topVoxel: 4
-  underWaterVoxel: 0
-  nearWaterVoxel: 4
+  topVoxel: 1
+  underWaterVoxel: 2
+  nearWaterVoxel: 2
   treeThreshold: 0.5

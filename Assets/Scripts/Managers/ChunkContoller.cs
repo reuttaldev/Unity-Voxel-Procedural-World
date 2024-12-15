@@ -16,7 +16,7 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     [SerializeField]
     private Transform chunksParent;
     [SerializeField]
-    public VoxelsTextureData voxelsTextureData;
+    public TextureData voxelsTextureData;
 
     public delegate void OnRenderFinishedAction();
     public event OnRenderFinishedAction OnRenderFinished;
@@ -57,6 +57,7 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
             renderer = pool.Pop();
         }
         // in the data, set the game object we created for easy access 
+        chunks[newPos] = new ChunkData();
         chunks[newPos].renderer = renderer;
         var chunkGO = renderer.gameObject;
         chunkGO.name = newPos.ToString();
@@ -145,7 +146,7 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
         // check if the position is at the end of the currently existing world.
         // if it is, then there is not reason to render it since a new chunk will be generated there sometime.
         // this avoids rendering the chunks (that are procedurally generated) walls 
-        return VoxelType.Grass_Mix  ;
+        return VoxelType.Light_Grass  ;
     }
     /// <summary>
     /// return the elements from l that are not found in our chunk dictionary, order by distance (so we render the chunks that are closest to the player first). 

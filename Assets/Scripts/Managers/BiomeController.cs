@@ -28,12 +28,10 @@ public class BiomeController : MonoBehaviour
 
         // now, check if this column should contain a tree
         float treeNoise = NoiseUtility.GetNoise(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ, settings.treeNoise);
-        //Debug.Log(treeNoise);
         VoxelType treeType = DecideTreeTypeByThreshold(treeNoise, settings.treeThreshold);
         if(treeType != VoxelType.Empty)
         {
             var treePos = new Vector3Int(columnX, groundHeight + 1, columnZ);
-            Debug.Log(treePos);
             treeGenerator.AddTree(chunk,treePos,treeType,treeNoise);
         }
     }
@@ -62,7 +60,7 @@ public class BiomeController : MonoBehaviour
     private VoxelType DecideTreeTypeByThreshold(float noiseValue, float threshold)
     {
         if (noiseValue > threshold)
-            return VoxelType.TreeTrunk;
+            return VoxelType.Light_Trunk;
         return VoxelType.Empty;
     }
 

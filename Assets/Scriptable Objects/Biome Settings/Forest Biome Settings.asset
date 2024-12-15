@@ -17,6 +17,6 @@ MonoBehaviour:
   waterScale: 0.05
   waterThreshold: 5
   topVoxel: 0
-  underWaterVoxel: 2
+  underWaterVoxel: 0
   nearWaterVoxel: 0
   treeThreshold: 0.8
