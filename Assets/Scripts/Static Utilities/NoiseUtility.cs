@@ -33,12 +33,18 @@ public static class NoiseUtility
     {
         return (int)(n * EnvironmentConstants.chunkHeight);
     }
-    public static int GetNoise(float x, float z, NoiseSettings settings)
+
+    //Normalize from 0 to chunk hights. We are working with voxel units, so the value must be int
+    public static int GetNormalizedNoise(float x, float z, NoiseSettings settings)
     {
-        float noise = NoiseUtility.OctavePerlin(x, z, settings);
-        noise = NoiseUtility.Redistribution(noise,settings);
-        return (int)NoiseUtility.NormalizeToChunkHeight(noise);
+        float noise = OctavePerlin(x, z, settings);
+        noise = Redistribution(noise,settings);
+        return (int)NormalizeToChunkHeight(noise);
     }
 
-
+    public static float GetNoise(float x, float z, NoiseSettings settings)
+    {
+        float noise = OctavePerlin(x, z, settings);
+        return Redistribution(noise, settings);
+    }
 }

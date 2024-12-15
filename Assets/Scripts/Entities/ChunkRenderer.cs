@@ -66,6 +66,7 @@ public class ChunkRenderer : MonoBehaviour
             waterMesh.AddUV(TextureUtility.GetUvsForTexture(face));
         }
     }
+
     /// <summary>
     /// Checks if there is a voxel against the specified face. 
     /// If a voxel is present, there is no need to draw the face, 

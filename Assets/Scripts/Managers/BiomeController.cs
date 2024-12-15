@@ -1,3 +1,4 @@
+using Cinemachine;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ public class BiomeController : MonoBehaviour
     [SerializeField]
     private List<BiomeSettings> biomesSettings;
     [SerializeField]
-    private List<NoiseSettings> treesNoiseSettings;
+    private TreeGenerator treeGenerator;
 
     public BiomeType GetTypeOfChunk(Vector3 chunkWorldPos)
     {
@@ -19,23 +20,21 @@ public class BiomeController : MonoBehaviour
     public void FillChunkColumn(ChunkData chunk, BiomeType type, Vector3 chunkWorldPos, int columnX, int columnZ)
     {
         var settings = biomesSettings[(byte)type];
-        int groundHeight = NoiseUtility.GetNoise(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ, settings.noise);
+        int groundHeight = NoiseUtility.GetNormalizedNoise(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ, settings.noise);
         for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
         {
             chunk[columnX, y, columnZ] = DecideVoxelTypeByY(y, groundHeight, settings);
         }
-    }
-    public void PlaceTrees(TreeData data, BiomeType type, Vector3 chunkWorldPos, int columnX, int columnZ)
-    {
-        var noiseSettings = treesNoiseSettings[(byte)type];
-        var settings = biomesSettings[(byte)type];
 
-        // get a random noise at x,z position
-        int treeThreshold = NoiseUtility.GetNoise(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ, noiseSettings);
-        // if the noise is greater than a pre-set value (tree threshold) for this biome, then add a tree there
-        if(treeThreshold > settings.treeThreshold)
+        // now, check if this column should contain a tree
+        float treeNoise = NoiseUtility.GetNoise(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ, settings.treeNoise);
+        //Debug.Log(treeNoise);
+        VoxelType treeType = DecideTreeTypeByThreshold(treeNoise, settings.treeThreshold);
+        if(treeType != VoxelType.Empty)
         {
-
+            var treePos = new Vector3Int(columnX, groundHeight + 1, columnZ);
+            Debug.Log(treePos);
+            treeGenerator.AddTree(chunk,treePos,treeType,treeNoise);
         }
     }
     /// Determines the appropriate VoxelType based on the Y coordinate (height) of the voxel and the biome it is in.
@@ -60,5 +59,12 @@ public class BiomeController : MonoBehaviour
         // equals = ground position
         return biomeSettings.topVoxel;
     }
+    private VoxelType DecideTreeTypeByThreshold(float noiseValue, float threshold)
+    {
+        if (noiseValue > threshold)
+            return VoxelType.TreeTrunk;
+        return VoxelType.Empty;
+    }
+
 }
 

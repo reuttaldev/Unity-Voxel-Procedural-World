@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Trees Forest Noise Settings
   m_EditorClassIdentifier: 
   zoom: 0.01
-  zoomOffset: 0.01
+  zoomOffset: 0.05
   noiseScale: 0.01
-  noiseOffset: -7
+  noiseOffset: 5
   octaves: 5
-  amplitudeMultiplier: 0.5
-  redistributionMultiplier: 1
-  expo: 5
+  amplitudeMultiplier: 5
+  intensity: 1
+  smoothness: 1

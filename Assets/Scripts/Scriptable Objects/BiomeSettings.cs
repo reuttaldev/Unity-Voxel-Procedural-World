@@ -8,6 +8,7 @@ public class BiomeSettings : ScriptableObject
 
     [Header("Noise")]
     public NoiseSettings noise;
+    public NoiseSettings treeNoise;
 
     [Header("Appearance")]
     [SerializeField]

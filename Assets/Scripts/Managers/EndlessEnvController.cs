@@ -17,6 +17,8 @@ public class EndlessEnvController : MonoBehaviour
     [SerializeField]
     private ChunkContoller chunkController;
     [SerializeField]
+    private TreeGenerator treeGenerator;
+    [SerializeField]
     // time passed between checks to see if more chunks need to be generated 
     private float restDuration = 2f,time = 0 ;
     private bool generating = false;
@@ -43,15 +45,15 @@ public class EndlessEnvController : MonoBehaviour
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
         generating = true;
-        // Step 1: Generate the chunk data, i.e which voxel type need to be at each position for that chunk
-        // all chunks must be generated and present in the array before creating the meshes, to allow checks on shared faces (i.e., check if a face needs to be visible or occluded)
-        await GenerateWorldData(poses);
-        // Step 2: Instantiate (or use from an existing pool) chunk game object, so we have something to apply the mesh to
+        // Step 1: Instantiate (or use from an existing pool) chunk game object, so we have something to apply the mesh to
         // must be done on main thread since we are changing game object properties
         foreach (var pos in poses)
         {
             chunkController.CreateChunkGO(pos);
         }
+        // Step 2: Generate the chunk data, i.e which voxel type need to be at each position for that chunk
+        // all chunks must be generated and present in the array before creating the meshes, to allow checks on shared faces (i.e., check if a face needs to be visible or occluded)
+        await GenerateWorldData(poses);
         //Step 3: Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
         // must be done after generating the game objects since the renderer is a component of the game object.
         // need to change this- so it can be done in parallel 
@@ -60,7 +62,6 @@ public class EndlessEnvController : MonoBehaviour
         /// Step 4: Render the chunk based on the chunk mesh data that was calculated previously.
         /// again,must be done on the main thread. 
         /// It will start automatically in chunk controller Update method when there is something to render
-        //StartCoroutine(chunkController.RenderChunksSequentially(taskToken));
         
         await meshGeneration;
         generating = false;
@@ -120,6 +121,9 @@ public class EndlessEnvController : MonoBehaviour
             {
                 chunkController.GenerateChunkData(pos);
             }
+            // after all chunk data has been filled, start generating the trees. 
+            // tree data must be generated after the chunks data, since some elements of a tree can be split between chunks when it is on the wall of a chunk (trunk is in chunk A, some leafs enter chunk B).
+            //treeGenerator.GenerateTreesData();
         }
         , taskTokenSource.Token
         );

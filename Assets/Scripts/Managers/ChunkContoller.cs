@@ -31,33 +31,13 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     bool rendering = false;
 
     /// <summary>
-    /// Generate the chunk data, i.e which voxel type need to be at each position for that chunk
-    /// </summary>
-    /// <param name="pos"></param>
-    public void GenerateChunkData(ChunkPosition pos)
-    {
-        ChunkData chunk = new ChunkData();
-        FillChunkValues(chunk, pos.ToWorldPosition());
-        chunks[pos] = chunk;
-    }
-    private void FillChunkValues(ChunkData chunk, Vector3 chunkWorldPos)
-    {
-        var chunkType = biomeController.GetTypeOfChunk(chunkWorldPos);
-        for (int x = 0; x < EnvironmentConstants.chunkWidth; x++)
-        {
-            for (int z = 0; z < EnvironmentConstants.chunkDepth; z++)
-            {
-                biomeController.FillChunkColumn(chunk, chunkType, chunkWorldPos, x, z);
-            }
-        }
-    }
-    /// <summary>
     /// Instantiate (or use from an existing pool) chunk game object
     /// this must be done on the main thread 
     /// </summary>
-    private ChunkRenderer InstantiateChunkGO(ChunkPosition pos)
+    private ChunkRenderer InstantiateChunk(ChunkPosition pos)
     {
-        ChunkData chunkData = chunks[pos];
+        ChunkData chunk = new ChunkData();
+        chunks[pos] = chunk;
         var chunkGO = Instantiate(chunkPrefab, pos.ToWorldPosition(), Quaternion.identity);
         chunkGO.transform.SetParent(chunksParent);
         chunkGO.name = pos.ToString();
@@ -70,7 +50,7 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
         ChunkRenderer renderer;
         if(pool.Count == 0)
         {
-            renderer = InstantiateChunkGO(newPos);
+            renderer = InstantiateChunk(newPos);
         }   
         else
         {
@@ -100,6 +80,23 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     }
 
     /// <summary>
+    /// Generate the chunk data, i.e which voxel type need to be at each position for that chunk
+    /// </summary>
+    /// <param name="pos"></param>
+    public void GenerateChunkData(ChunkPosition pos)
+    {
+        ChunkData chunk = chunks[pos];
+        Vector3Int chunkWorldPos = pos.ToWorldPosition();
+        var chunkType = biomeController.GetTypeOfChunk(chunkWorldPos);
+        for (int x = 0; x < EnvironmentConstants.chunkWidth; x++)
+        {
+            for (int z = 0; z < EnvironmentConstants.chunkDepth; z++)
+            {
+                biomeController.FillChunkColumn(chunk, chunkType, chunkWorldPos, x, z);
+            }
+        }
+    }
+    /// <summary>
     /// Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
     /// Should be done on a separate thread, as calculations can be long and we do not want to block the main thread.
     /// </summary>
@@ -127,21 +124,11 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
         // So I am doing it spread out over time, to avoid blocking the main thread and to allow other operations to happen while rendering
         if (!rendering && positionsToBeRendered.TryDequeue(out var pos))
         {
+            rendering = true;   
             //StartCoroutine(RenderChunksSequentially());
             chunks[pos].renderer.Render();
+            rendering = false;   
         }
-    }
-    public IEnumerator RenderChunksSequentially()
-    {
-        rendering = true;
-        while (positionsToBeRendered.TryDequeue(out var pos))
-        {
-            Debug.Log("rendeing");
-            //token.ThrowIfCancellationRequested();
-            chunks[pos].renderer.Render();
-            yield return new WaitForEndOfFrame();
-        }
-        rendering = false;
     }
     public VoxelType GetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos)
     {

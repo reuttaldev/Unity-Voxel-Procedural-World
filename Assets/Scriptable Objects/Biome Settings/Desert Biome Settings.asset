@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Desert Biome Settings
   m_EditorClassIdentifier: 
   noise: {fileID: 11400000, guid: e380d96b8ac4a9e4fa1cafb7728839a9, type: 2}
+  treeNoise: {fileID: 11400000, guid: c1e181636d43f1946a08fa66a5575ad4, type: 2}
   waterScale: 0.1
-  waterThreshold: 5
+  waterThreshold: 10
   topVoxel: 4
-  underGroundVoxel: 2
+  underWaterVoxel: 0
   nearWaterVoxel: 4
   treeThreshold: 0.5

@@ -13,8 +13,10 @@ public enum VoxelType: byte
     Dark_Sand,
     Sand_Mix,
     Water,
+    TreeTrunk,
     Empty
 }
+
 
 
 /// <summary>

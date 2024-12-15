@@ -2,8 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TreeData : MonoBehaviour
+public class TreeData 
 {
-    List<Vector2Int> trunksPositions = new List<Vector2Int>();
-    List<Vector3Int> leafPositions = new List<Vector3Int>();
+    public ChunkData parentChunkData { get; }
+    public Vector3Int localTrunkPosition { get; }
+    public VoxelType type { get; }
+    public int trunkHeight { get; }
+    public TreeData(VoxelType type, Vector3Int pos, ChunkData p, int h)
+    {
+        this.type = type;
+        localTrunkPosition = pos;
+        parentChunkData = p;
+        trunkHeight = h;
+    }
 }
