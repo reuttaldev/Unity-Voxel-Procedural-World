@@ -26,7 +26,7 @@ public class TextureData : ScriptableObject
     {
         if (dataDict.TryGetValue(type, out var voxelData))
             return voxelData;
-        //Debug.LogError("No voxel data for type "+type.ToString() +"in texture data scriptable object");
+        Debug.LogError("No voxel data for type "+type.ToString() +" in texture data scriptable object");
         return dataDict[VoxelType.Light_Grass];
     }
 

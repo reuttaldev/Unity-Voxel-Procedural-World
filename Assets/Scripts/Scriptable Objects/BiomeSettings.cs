@@ -21,13 +21,13 @@ public class BiomeSettings : ScriptableObject
 
     [Header("Trees")]
     public float treeThreshold = 0.5f;
+    public int maxTrunkHeight = 7, minTrunkHeight = 4; // in voxel units
 
     private void OnEnable()
     {
         waterThreshold = waterScale * EnvironmentConstants.chunkHeight;
     }
 }
-
 public enum BiomeType : byte
 {
     Desert,

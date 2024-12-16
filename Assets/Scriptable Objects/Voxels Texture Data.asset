@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Voxels Texture Data
   m_EditorClassIdentifier: 
   data:
-  - type: 0
-    topTexturePosition: {x: 15, y: 13}
-    sideTexturePosition: {x: 29, y: 18}
   - type: 6
     topTexturePosition: {x: 21, y: 18}
     sideTexturePosition: {x: 21, y: 19}
+  - type: 0
+    topTexturePosition: {x: 15, y: 13}
+    sideTexturePosition: {x: 29, y: 18}
   - type: 14
     topTexturePosition: {x: 11, y: 23}
     sideTexturePosition: {x: 11, y: 23}

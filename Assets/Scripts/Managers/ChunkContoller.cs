@@ -5,9 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Xml.Serialization;
+using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
-public class ChunkContoller : SimpleSingleton<ChunkContoller>   
+public class ChunkContoller : SimpleSingleton<ChunkContoller>
 {
     [SerializeField]
     private GameObject chunkPrefab;
@@ -17,14 +19,15 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     private Transform chunksParent;
     [SerializeField]
     public TextureData voxelsTextureData;
+    System.Random random = new System.Random();
 
     public delegate void OnRenderFinishedAction();
     public event OnRenderFinishedAction OnRenderFinished;
 
-    private Dictionary<ChunkPosition,ChunkData> chunks = new Dictionary<ChunkPosition, ChunkData>();
+    private Dictionary<ChunkPosition, ChunkData> chunks = new Dictionary<ChunkPosition, ChunkData>();
     public ChunkPosition[] CurrentChunkPositions => chunks.Keys.ToArray();
     // have a pool for the chunk gameobject, since instantiating and destroying game objects is expensive 
-    private Stack<ChunkRenderer> pool= new Stack<ChunkRenderer>();
+    private Stack<ChunkRenderer> pool = new Stack<ChunkRenderer>();
 
     // multithread safe 
     private static ConcurrentQueue<ChunkPosition> positionsToBeRendered = new ConcurrentQueue<ChunkPosition>();
@@ -48,10 +51,10 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     public void CreateChunkGO(ChunkPosition newPos)
     {
         ChunkRenderer renderer;
-        if(pool.Count == 0)
+        if (pool.Count == 0)
         {
             renderer = InstantiateChunk(newPos);
-        }   
+        }
         else
         {
             renderer = pool.Pop();
@@ -108,13 +111,13 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
             Debug.LogError("Trying to render mesh data without initializing chunk data first.");
             return;
         }
-        var renderer = chunks[pos].renderer; 
+        var renderer = chunks[pos].renderer;
         if (renderer == null)
         {
             Debug.LogError("Trying to generate mesh data without initializing chunk Game Object first.");
             return;
         }
-        renderer.GenerateChunkMeshData(chunks[pos],pos);
+        renderer.GenerateChunkMeshData(chunks[pos], pos);
         positionsToBeRendered.Enqueue(pos);
     }
 
@@ -125,16 +128,76 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
         // So I am doing it spread out over time, to avoid blocking the main thread and to allow other operations to happen while rendering
         if (!rendering && positionsToBeRendered.TryDequeue(out var pos))
         {
-            rendering = true;   
+            rendering = true;
             //StartCoroutine(RenderChunksSequentially());
             chunks[pos].renderer.Render();
-            rendering = false;   
+            rendering = false;
         }
     }
+    #region TREES
+    public void AddTreesData(ChunkPosition pos)
+    {
+        ChunkData chunk = chunks[pos];
+        foreach (TreeData treeData in chunk.TreesData)
+        {
+            AddTreeTrunk(chunk, treeData);
+            AddTreeLeafs(chunk, pos,treeData);
+        }
+    }
+    private void AddTreeTrunk(ChunkData chunk,TreeData data)
+    {
+        for (int i = 0; i < data.trunkHeight; i++)
+        {
+            chunk[data.localTrunkPosition.x,data.localTrunkPosition.y+i, data.localTrunkPosition.z] = data.trunkType;
+        }
+    }
+    private void AddTreeLeafs(ChunkData chunk, ChunkPosition chunkPos, TreeData data)
+    {
+        var leafs = GenerateLeafPositions(data.localTrunkPosition + new Vector3Int(0, data.trunkHeight+data.leafRadius, 0), data.leafRadius);
+        foreach (Vector3Int localPos in leafs)
+        {
+            if (ChunkUtility.ValidLocalVoxelCoordinates(localPos))
+            {
+                chunk[localPos] = data.leafType;
+            }
+            else // the voxel that requires checking is not in this specific chunk
+            {
+                // access the chunk the voxel is in 
+                SetVoxelTypeByGlobalPos(localPos + chunkPos.ToWorldPosition(),data.leafType);
+            }
+        }
+    }
+    private List<Vector3Int> GenerateLeafPositions(Vector3Int position, int radius)
+    {
+        Vector3Int offset = new Vector3Int();
+        List<Vector3Int> leafPositions= new List<Vector3Int>();
+        for (int x = -radius; x <= radius; x++)
+        {
+            offset.x = x;
+            for (int y = -radius; y <= radius; y++)
+            {
+                offset.y = y ;
+                for (int z = -radius; z <= radius; z++)
+                {
+                    offset.z = z;
+                    var currentPos = position + offset;
+                    // apply randomness based on distance from trunk
+                    float distance = offset.magnitude;
+                    float probability = Mathf.Clamp01(0.8f - (0.05f * distance));
+                    if (random.NextDouble() < probability)
+                    {
+                        leafPositions.Add(currentPos);
+                    }
+                }
+            }
+        }
+        return leafPositions;
+    }
+
+    #endregion
+    #region GET METHODS
     public VoxelType GetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos)
     {
-        //if (voxelGlobalPos.y < 0)
-            //return VoxelType.Empty;
         // get the position of the chunk that contains this voxel
         var chunkPos = new ChunkPosition(voxelGlobalPos);
         // check if this chunk is in our environment 
@@ -164,4 +227,21 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     {
         return chunks.Keys.Where(pos => !l.Contains(pos));
     }
+    #endregion
+
+    #region SET METHODS
+    public bool SetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos, VoxelType type)
+    {
+        // get the position of the chunk that contains this voxel
+        var chunkPos = new ChunkPosition(voxelGlobalPos);
+        // check if this chunk is in our environment 
+        if (chunks.ContainsKey(chunkPos))
+        {
+            var voxelLocalPos = ChunkUtility.GlobalVoxelPositionToLocal(chunkPos, voxelGlobalPos);
+            chunks[chunkPos][voxelLocalPos] = type;
+            return true;
+        }
+        return false;
+    }
+    #endregion
 }

@@ -4,15 +4,19 @@ using UnityEngine;
 
 public class TreeData 
 {
-    public ChunkData parentChunkData { get; }
     public Vector3Int localTrunkPosition { get; }
-    public VoxelType type { get; }
+    public VoxelType leafType { get; }
+
+    public VoxelType trunkType { get; }
     public int trunkHeight { get; }
-    public TreeData(VoxelType trunkType, VoxelType leafType, Vector3Int pos, ChunkData p, int h)
+    public int leafRadius { get; }
+    public TreeData(VoxelType trunkType, VoxelType leafType, Vector3Int pos,  int h,int r)
     {
-        this.type = type;
-        localTrunkPosition = pos;
-        parentChunkData = p;
-        trunkHeight = h;
+        this.trunkType = trunkType;
+        this.leafType = leafType;
+        this.localTrunkPosition = pos;
+        this.trunkHeight = h;
+        this.leafRadius = r;
+
     }
 }

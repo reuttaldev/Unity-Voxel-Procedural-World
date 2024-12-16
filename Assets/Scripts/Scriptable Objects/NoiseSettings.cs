@@ -8,7 +8,6 @@ public class NoiseSettings : ScriptableObject
     [Header("Noise")]
     public float zoom = 0.01f;
     public float zoomOffset = 0.01f;
-    public float noiseScale = 0.01f;
     public float noiseOffset = -100;
     // noise layers to combine 
     public int octaves = 5;

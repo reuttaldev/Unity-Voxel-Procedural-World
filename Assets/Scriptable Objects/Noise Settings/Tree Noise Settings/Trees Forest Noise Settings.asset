@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97788f3b721669149953e5f0932a7c44, type: 3}
   m_Name: Trees Forest Noise Settings
   m_EditorClassIdentifier: 
-  zoom: 0.01
+  zoom: 0.1
   zoomOffset: 0.05
-  noiseScale: 0.01
   noiseOffset: 5
   octaves: 5
-  amplitudeMultiplier: 5
-  intensity: 1
-  smoothness: 1
+  amplitudeMultiplier: 4
+  intensity: 4
+  smoothness: 2

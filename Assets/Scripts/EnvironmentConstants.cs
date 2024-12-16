@@ -11,7 +11,6 @@ public static class EnvironmentConstants
     public const int chunkWidth = 15, chunkDepth=15, chunkHeight=100;
     public const int worldSizeInChunks = 4;
     public static readonly int chunkSize = chunkWidth * chunkDepth * chunkHeight;
-    public const float noiseScale = 0.02f;
 
     // voxel = cube in this context. These are the cube vertices
     public static readonly Vector3[] voxelVertices = new Vector3[8]

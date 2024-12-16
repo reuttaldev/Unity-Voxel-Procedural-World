@@ -17,8 +17,6 @@ public class EndlessEnvController : MonoBehaviour
     [SerializeField]
     private ChunkContoller chunkController;
     [SerializeField]
-    private TreeGenerator treeGenerator;
-    [SerializeField]
     // time passed between checks to see if more chunks need to be generated 
     private float restDuration = 2f,time = 0 ;
     private bool generating = false;
@@ -123,7 +121,10 @@ public class EndlessEnvController : MonoBehaviour
             }
             // after all chunk data has been filled, start generating the trees. 
             // tree data must be generated after the chunks data, since some elements of a tree can be split between chunks when it is on the wall of a chunk (trunk is in chunk A, some leafs enter chunk B).
-            //treeGenerator.GenerateTreesData();
+            foreach (var pos in chunkPositions)
+            {
+                chunkController.AddTreesData(pos);
+            }
         }
         , taskTokenSource.Token
         );

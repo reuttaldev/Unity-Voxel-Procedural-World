@@ -145,10 +145,9 @@ public class ChunkRenderer : MonoBehaviour
         }
         if(collisionMesh.Empty)
         {
-            Debug.LogError("Trying to render before calculating mesh data.");
+            Debug.LogError("Trying to render before calculating mesh data. "+name);
             return;
         }
-
         // add collision 
         meshCollider.sharedMesh = collisionMesh.GetCollisionMesh();
         // create the Unity mesh, and fill it with our calculated mesh data

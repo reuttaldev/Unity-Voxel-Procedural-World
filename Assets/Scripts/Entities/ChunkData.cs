@@ -42,17 +42,28 @@ public class ChunkData
             voxels[index] = value;
         }
     }
+    private Vector3Int indicesVector = new Vector3Int(); 
     public VoxelType this[int x, int y, int z]
     {
         get
         {
-            return this[new Vector3Int(x, y, z)];
+            indicesVector.y = y; indicesVector.z = z; indicesVector.x = x;
+            return this[indicesVector];
         }
         set
         {
-            this[new Vector3Int(x, y, z)] = value;
+            indicesVector.y = y; indicesVector.z = z; indicesVector.x = x;
+            this[indicesVector] = value;
         }
     }
     // the renderer is attached to the chunk gameobject 
     public ChunkRenderer renderer = null;
+
+    // Location of trees is decided in BiomeController.FillChunkColumn when generating the world. 
+    private List<TreeData> treesDatas = new List<TreeData>();
+    public void AddTreeData(TreeData data)
+    {
+        treesDatas.Add(data);
+    }
+    public IReadOnlyCollection<TreeData> TreesData => treesDatas;
 }
