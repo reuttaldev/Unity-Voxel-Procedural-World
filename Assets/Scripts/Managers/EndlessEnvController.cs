@@ -28,16 +28,23 @@ public class EndlessEnvController : MonoBehaviour
 
     // following https://learn.microsoft.com/en-us/dotnet/standard/parallel-programming/task-cancellation
     CancellationTokenSource taskTokenSource = new CancellationTokenSource();
-
+    private float initPlayerHeight = 15;
 
     private void Start()
     {
+        // player should be invisible when the world is not ready
+        player.gameObject.SetActive(false);  
+
         var initPoses = ChunkUtility.GetChunkPositionsAroundPos(new ChunkPosition(Vector3.zero)).ToArray();
         GenerateWorld(initPoses);
-        var middlePos = initPoses[0].ToWorldPosition() + new Vector3(EnvironmentConstants.chunkWidth/2,15, EnvironmentConstants.chunkDepth / 2);
-        player.position = middlePos;
+
+        PlacePlayer(initPoses[0].ToWorldPosition() + new Vector3(EnvironmentConstants.chunkWidth/2,initPlayerHeight, EnvironmentConstants.chunkDepth / 2));
+    }
+    private void PlacePlayer(Vector3 worldMiddle)
+    {
+        player.position = worldMiddle;
         player.gameObject.SetActive(true);  
-        playerCurrentChunk = new ChunkPosition(middlePos);
+        playerCurrentChunk = new ChunkPosition(worldMiddle);
     }
     private async Task GenerateWorld(ChunkPosition[] poses)
     {
