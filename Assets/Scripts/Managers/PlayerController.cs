@@ -56,7 +56,7 @@ public class PlayerController : MonoBehaviour
             Jump();
         }
 
-        velocity = rb.velocity;
+        velocity = rb.linearVelocity;
         horizontalVelocity.y = velocity.y;
         horizontalVelocity.x = velocity.x;
         horizontalVelocity.z = velocity.z;
@@ -96,9 +96,9 @@ public class PlayerController : MonoBehaviour
     void ControlDrag()
     {
         if (grounded)
-            rb.drag = groundDrag;
+            rb.linearDamping = groundDrag;
         else
-            rb.drag = airDrag; 
+            rb.linearDamping = airDrag; 
     }
 
     void ControlGrounded()
@@ -111,7 +111,7 @@ public class PlayerController : MonoBehaviour
     {
         if (horizontalVelocity.magnitude > moveSpeed)
         {
-            rb.velocity = horizontalVelocity.normalized * moveSpeed +verticalVelocity;
+            rb.linearVelocity = horizontalVelocity.normalized * moveSpeed +verticalVelocity;
         }
     }
     // this method will be called from animation trigger each time the player seems to take a step
