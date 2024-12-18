@@ -1,48 +1,47 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Windows;
+using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
 
     [SerializeField]
-    private float moveSpeed = 4, runMultiplier = 6, airMultiplier = 0.4f,  rotationSpeed = 1f, accelerationMultiplier = 10,
-        jumpSpeed = 1.4f, rotationThreshold = 0.01f, verticalVelocityThreshold = 0.01f, cameraClamp = 90, airDrag = 0.5f, groundDrag = 2;
-    private float verticalCameraRotation, horizontalCameraRotation;
+    private float moveSpeed = 4, runMultiplier = 6, airMultiplier = 0.4f, accelerationMultiplier = 10, 
+        jumpSpeed = 1.4f, airDrag = 0.5f, groundDrag = 2, playerRadius = 0.7f;
     [SerializeField]
     AudioClip grassFootsteps, stoneFootsteps, dirtFootsteps, sandFootsteps, waterFootStep;
     [SerializeField]
-    InputActionReference moveAction, runAction, jumpAction, lookAction;
+    InputActionReference moveAction, runAction, jumpAction;
     [SerializeField]
-    public GameObject cameraTarget;
-
-
-    Rigidbody rb;
-    Animator animator;
+    public Transform raycastPosition;
+    [SerializeField]
+    LayerMask GroundLayers;
     AudioSource audioSource;
 
+    Animator animator;
+    Rigidbody rb;
     private bool moving = false,grounded = true;
     private Vector2 input;
     private Vector3 moveDirection,velocity, horizontalVelocity,verticalVelocity;
-
-
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
         rb = gameObject.GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
-        audioSource = GetComponent<AudioSource>();
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        UnityEngine.Cursor.visible = false;
     }
+    private void OnEnable()
+    {
+        jumpAction.action.performed += Jump;
+    }
+    private void OnDisable()
+    {
+        jumpAction.action.performed -= Jump;
+    }
+
     void FixedUpdate()
     {
-        //  camera
-        RotateCamera();
-
-
         input = moveAction.action.ReadValue<Vector2>();
         if (input.x != 0 || input.y != 0)
         {
@@ -51,13 +50,8 @@ public class PlayerController : MonoBehaviour
         else if (moving)
             StopMoving();
 
-        if (jumpAction.action.IsPressed())
-        {
-            Jump();
-        }
-
         velocity = rb.linearVelocity;
-        horizontalVelocity.y = velocity.y;
+        verticalVelocity.y = velocity.y;
         horizontalVelocity.x = velocity.x;
         horizontalVelocity.z = velocity.z;
         ControlGrounded();
@@ -72,9 +66,10 @@ public class PlayerController : MonoBehaviour
         var force = moveDirection.normalized * moveSpeed * accelerationMultiplier;
         if (run) 
             force *= runMultiplier;
+        // make movement in the air different (slower) compared to normal movement
         if (!grounded)
             force *= airMultiplier;
-        rb.AddForce(force, ForceMode.Force);
+        rb.AddForce(force, ForceMode.VelocityChange);
         animator.SetFloat("speed", input.magnitude);
     }
     void StopMoving()
@@ -84,12 +79,12 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("speed", 0);
     }
 
-    void Jump()
+    void Jump(InputAction.CallbackContext context)
     {
         if (!grounded)
             return;
-        rb.AddForce(Vector3.up * jumpSpeed * accelerationMultiplier, ForceMode.Impulse);
-        animator.SetBool("jump", true);
+        rb.AddForce(Vector3.up * jumpSpeed, ForceMode.Impulse);
+        animator.SetTrigger("jump");
     }
 
     // drag makes the movement seem more realistic. But it should not happen while in air
@@ -101,11 +96,19 @@ public class PlayerController : MonoBehaviour
             rb.linearDamping = airDrag; 
     }
 
+    // check if player's feet are collidng with anything 
     void ControlGrounded()
     {
-        grounded = Mathf.Abs(velocity.y) < verticalVelocityThreshold;
+        grounded = Physics.CheckSphere(raycastPosition.position, playerRadius,GroundLayers, QueryTriggerInteraction.Ignore);
         animator.SetBool("isGrounded", grounded);
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.DrawSphere(raycastPosition.position, playerRadius);
+    }
+#endif
     // to move, we are adding force. The force can make us move faster than we should.
     void ControlSpeed()
     {
@@ -130,20 +133,6 @@ public class PlayerController : MonoBehaviour
             case VoxelType.Water:
                 audioSource.PlayOneShot(waterFootStep);
                 break;
-        }
-    }
-
-    private void RotateCamera()
-    {
-        var lookAtDirection = lookAction.action.ReadValue<Vector2>();
-        // if there is an input
-        if (lookAtDirection.sqrMagnitude >= rotationThreshold)
-        {
-            verticalCameraRotation = Mathf.Clamp(verticalCameraRotation + lookAtDirection.y * rotationSpeed, -cameraClamp, cameraClamp);
-            horizontalCameraRotation = lookAtDirection.x * rotationSpeed;
-            // roatating to the sides of the charater view is on the y axis, and rotating up is on the x axis for some readon
-            cameraTarget.transform.localRotation = Quaternion.Euler(verticalCameraRotation, 0.0f, 0.0f);
-            transform.Rotate(Vector3.up * horizontalCameraRotation) ;
         }
     }
 }
