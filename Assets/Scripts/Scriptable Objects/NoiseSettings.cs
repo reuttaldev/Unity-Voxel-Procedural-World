@@ -5,13 +5,22 @@ using UnityEngine;
 
 public class NoiseSettings : ScriptableObject
 {
+    // everything has a serialize field marking and a private setter to ensure setting vales 
+    // can only be adjusted through the editor, and not through scripts in runtime
     [Header("Noise")]
-    public float zoom = 0.01f;
-    public float zoomOffset = 0.01f;
-    public float noiseOffset = -100;
+    [field: SerializeField]
+    public float zoom { get; private set; } = 0.01f;
+    [field: SerializeField]
+    public float zoomOffset { get; private set; } = 0.01f;
+    [field: SerializeField]
+    public float noiseOffset { get; private set; } = -100;
+    [field: SerializeField]
     // noise layers to combine 
-    public int octaves = 5;
-    public float amplitudeMultiplier = 0.5f;
-    public float intensity = 1.0f;
-    public float smoothness = 5;
+    public int octaves { get; private set; } = 5;
+    [field: SerializeField]
+    public float amplitudeMultiplier { get; private set; } = 0.5f;
+    [field: SerializeField]
+    public float intensity { get; private set; } = 1.0f;
+    [field: SerializeField]
+    public float smoothness { get; private set; } = 5;
 }

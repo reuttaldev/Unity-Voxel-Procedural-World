@@ -20,20 +20,32 @@ public class BiomeController : MonoBehaviour
     public void FillChunkColumn(ChunkData chunk, BiomeType type, Vector3 chunkWorldPos, int columnX, int columnZ)
     {
         var settings = biomesSettings[(byte)type];
-        var globalPos = new Vector2(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ);
-        int groundHeight = NoiseUtility.GetNormalizedNoise(globalPos, settings.noise);
+        var globalColumnPos = new Vector2(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ);
+        // the noise is normalized to be between 0 and chunk height
+        int groundHeight = NoiseUtility.GetNormalizedNoise(globalColumnPos, settings.noise);
+
+        // have a secondary noise to determine whether this column should include e.g. rocks
+        float secondaryHeight = NoiseUtility.GetNormalizedNoise(globalColumnPos, settings.secondaryNoise);
+        // equivalent to setting a prob p for a column being store (threshold), generating random num (noise), if it is greater than make it stone 
+        bool isStone = secondaryHeight > settings.stoneThreshold;
+
         for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
         {
-            chunk[columnX, y, columnZ] = DecideVoxelTypeByY(y, groundHeight, settings);
+            // if noise is above the threshold, then this whole column is stone (below groundHeight - everything above that is either air or water) 
+            if (isStone && y <= groundHeight)
+                chunk[columnX, y, columnZ] = settings.stoneVoxel;
+            else
+                chunk[columnX, y, columnZ] = DecideVoxelTypeByY(y, groundHeight, settings);
         }
 
         // now, check if this column should contain a tree
-        float treeNoise = NoiseUtility.GetNoise(globalPos, settings.treeNoise);
+        float treeNoise = NoiseUtility.GetNoise(globalColumnPos, settings.treeNoise);
         if (treeNoise > settings.treeThreshold)
         {
-            chunk.AddTreeData(DecideTreeType(treeNoise,new Vector3Int(columnX,groundHeight+1,columnZ),settings));
+            DecideTreeType(treeNoise, new Vector3Int(columnX, groundHeight + 1, columnZ), settings);
         }
     }
+
     /// Determines the appropriate VoxelType based on the Y coordinate (height) of the voxel and the biome it is in.
     private VoxelType DecideVoxelTypeByY(int y, int groundPos, BiomeSettings biomeSettings)
     {

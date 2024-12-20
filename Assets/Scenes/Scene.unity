@@ -332,11 +332,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5162191678623159169, guid: 6f58cd612875fb348bae9c3080178fa3, type: 3}
       propertyPath: jumpSpeed
-      value: 6
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5162191678623159169, guid: 6f58cd612875fb348bae9c3080178fa3, type: 3}
+      propertyPath: groundDrag
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5162191678623159169, guid: 6f58cd612875fb348bae9c3080178fa3, type: 3}
       propertyPath: playerRadius
       value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5162191678623159169, guid: 6f58cd612875fb348bae9c3080178fa3, type: 3}
+      propertyPath: airMultiplier
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 7989377146034807749, guid: 6f58cd612875fb348bae9c3080178fa3, type: 3}
       propertyPath: m_Name

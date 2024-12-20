@@ -12,11 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 508edd09479d470428b63f7f29159abb, type: 3}
   m_Name: Desert Biome Settings
   m_EditorClassIdentifier: 
-  noise: {fileID: 11400000, guid: e380d96b8ac4a9e4fa1cafb7728839a9, type: 2}
-  treeNoise: {fileID: 11400000, guid: c1e181636d43f1946a08fa66a5575ad4, type: 2}
+  <noise>k__BackingField: {fileID: 11400000, guid: e380d96b8ac4a9e4fa1cafb7728839a9, type: 2}
+  <secondaryNoise>k__BackingField: {fileID: 11400000, guid: 6f5064579981ca646ab3ade52e72913e, type: 2}
+  <treeNoise>k__BackingField: {fileID: 11400000, guid: c1e181636d43f1946a08fa66a5575ad4, type: 2}
   waterScale: 0.1
-  waterThreshold: 10
-  topVoxel: 1
-  underWaterVoxel: 2
-  nearWaterVoxel: 2
-  treeThreshold: 0.5
+  <stoneThreshold>k__BackingField: 0
+  <topVoxel>k__BackingField: 1
+  <waterVoxel>k__BackingField: 3
+  <underWaterVoxel>k__BackingField: 1
+  <nearWaterVoxel>k__BackingField: 0
+  <stoneVoxel>k__BackingField: 14
+  treeThreshold: 3
+  maxTrunkHeight: 7
+  minTrunkHeight: 4
