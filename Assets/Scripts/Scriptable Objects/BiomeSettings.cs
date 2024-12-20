@@ -21,10 +21,10 @@ public class BiomeSettings : ScriptableObject
     [Header("Appearance")]
     [field: SerializeField]
     private float waterScale = 0.3f; // how much % out of the chunk height should be with water
-    [field: SerializeField]
-    private float stoneProb = 0.3f; // likelihood of a chunk's column being stone
     public float waterThreshold { get; private set;}
-    public float stoneThreshold { get; private set; }
+    [field: SerializeField]
+    private float stoneProb = 0.1f;// likelihood of a chunk's column being stone
+    public float stoneThreshold { get; private set; } 
     [field: SerializeField]
     public VoxelType topVoxel { get; private set; }
     [field: SerializeField]
@@ -38,14 +38,18 @@ public class BiomeSettings : ScriptableObject
 
     [Header("Trees")]
     [field: SerializeField]
-    public float treeThreshold = 10f;
+    private float treeProb = 0.1f;
+    public float treeThreshold { get; private set; }
     [field: SerializeField]
-    public int maxTrunkHeight = 7, minTrunkHeight = 4; // in voxel units
+    public int maxTrunkHeight { get; private set; } = 7;
+    [field: SerializeField]
+    public int minTrunkHeight { get; private set; } = 4; // in voxel units
 
     private void OnEnable()
     {
         waterThreshold = waterScale * EnvironmentConstants.chunkHeight;
-        stoneThreshold = (1- stoneProb) * EnvironmentConstants.chunkHeight; // 1- the prob bc we want the higher the prob, the lower the threshold
+        treeThreshold = 1 - treeProb;
+        stoneThreshold = 1 - stoneProb;
     }
 }
 public enum BiomeType : byte

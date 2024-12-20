@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -17,33 +18,45 @@ public class BiomeController : MonoBehaviour
     {
         return BiomeType.Forest;
     }
-    public void FillChunkColumn(ChunkData chunk, BiomeType type, Vector3 chunkWorldPos, int columnX, int columnZ)
+    public void FillChunkColumn(ChunkData chunk, BiomeType biomeType, Vector3 chunkWorldPos, int columnX, int columnZ)
     {
-        var settings = biomesSettings[(byte)type];
+        var settings = biomesSettings[(byte)biomeType];
         var globalColumnPos = new Vector2(chunkWorldPos.x + columnX, chunkWorldPos.z + columnZ);
         // the noise is normalized to be between 0 and chunk height
         int groundHeight = NoiseUtility.GetNormalizedNoise(globalColumnPos, settings.noise);
 
         // have a secondary noise to determine whether this column should include e.g. rocks
-        float secondaryHeight = NoiseUtility.GetNormalizedNoise(globalColumnPos, settings.secondaryNoise);
+        // using noise and not a random number to determine probability because a random(even with a seed) might not give us the same number, since we don't know if we will get to this part of code at exactly the same point in different machines- some are faster than others.
+        // but noise will always give us the same value for the same position
+        float secondaryNoise = NoiseUtility.GetNoise(globalColumnPos, settings.secondaryNoise);
         // equivalent to setting a prob p for a column being store (threshold), generating random num (noise), if it is greater than make it stone 
-        bool isStone = secondaryHeight > settings.stoneThreshold;
-
+        bool isStone = secondaryNoise > settings.stoneThreshold;
+        //if (isStone)
+            //Debug.Log("stone" + secondaryNoise);
+        bool columnContainsWater = false;
         for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
         {
-            // if noise is above the threshold, then this whole column is stone (below groundHeight - everything above that is either air or water) 
+            //if noise is above the threshold, then this whole column is stone (below groundHeight - everything above that is either air or water) 
             if (isStone && y <= groundHeight)
                 chunk[columnX, y, columnZ] = settings.stoneVoxel;
             else
-                chunk[columnX, y, columnZ] = DecideVoxelTypeByY(y, groundHeight, settings);
+            {
+                var type = DecideVoxelTypeByY(y, groundHeight, settings);
+                if(type == VoxelType.Water || type == VoxelType.Dark_Water)
+                    columnContainsWater = true;
+                chunk[columnX, y, columnZ] = type;
+            }
         }
 
-        // now, check if this column should contain a tree
-        float treeNoise = NoiseUtility.GetNoise(globalColumnPos, settings.treeNoise);
-        Debug.Log(treeNoise);
-        if (treeNoise > settings.treeThreshold)
+        if (!columnContainsWater)
         {
-            DecideTreeType(treeNoise, new Vector3Int(columnX, groundHeight + 1, columnZ), settings);
+            // now, check if this column should contain a tree
+            float treeNoise = NoiseUtility.GetNoise(globalColumnPos, settings.treeNoise);
+            Debug.Log(treeNoise);
+            if (treeNoise > settings.treeThreshold)
+            {
+                chunk.AddTreeData(DecideTreeType(treeNoise, new Vector3Int(columnX, groundHeight + 1, columnZ), settings));
+            }
         }
     }
 
@@ -72,11 +85,9 @@ public class BiomeController : MonoBehaviour
 
     private TreeData DecideTreeType(float noiseVal, Vector3Int localTrunkPos, BiomeSettings biomeSettings)
     {
-        // get the height of the trunk randonly. Using noise and not random because a random (even with a seed) might not give us the same number, since we don't know if we will get to this part of code at exactly the same point in different machines- some are faster than others.
-        // but noise will always give us the same value for the same position
+        // get the height of the trunk randonly (by noise- so it is alwasy the same value for the same position.
         // since the noise is not necessarily between 0 and 1, take the decimal part 
-        float decimalNoise = (noiseVal % 1); 
-        int height = (int)(decimalNoise * biomeSettings.maxTrunkHeight);
+        int height = (int)(noiseVal * biomeSettings.maxTrunkHeight);
         if (height < biomeSettings.minTrunkHeight)
             height = biomeSettings.minTrunkHeight;
         int radius = localTrunkPos.x % 2 ==0 ? 1 : 2;

@@ -20,7 +20,5 @@ public class NoiseSettings : ScriptableObject
     [field: SerializeField]
     public float amplitudeMultiplier { get; private set; } = 0.5f;
     [field: SerializeField]
-    public float intensity { get; private set; } = 1.0f;
-    [field: SerializeField]
-    public float smoothness { get; private set; } = 5;
+    public float smoothness { get; private set; } = 1;
 }

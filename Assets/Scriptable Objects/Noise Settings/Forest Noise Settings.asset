@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: Forest Noise Settings
   m_EditorClassIdentifier: 
   <zoom>k__BackingField: 0.01
-  <zoomOffset>k__BackingField: 0.01
-  <noiseOffset>k__BackingField: 100
-  <octaves>k__BackingField: 8
+  <zoomOffset>k__BackingField: 0
+  <noiseOffset>k__BackingField: 0.01
+  <octaves>k__BackingField: 5
   <amplitudeMultiplier>k__BackingField: 0.3
-  <intensity>k__BackingField: 1
   <smoothness>k__BackingField: 4
