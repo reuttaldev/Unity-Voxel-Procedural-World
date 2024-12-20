@@ -40,6 +40,7 @@ public class BiomeController : MonoBehaviour
 
         // now, check if this column should contain a tree
         float treeNoise = NoiseUtility.GetNoise(globalColumnPos, settings.treeNoise);
+        Debug.Log(treeNoise);
         if (treeNoise > settings.treeThreshold)
         {
             DecideTreeType(treeNoise, new Vector3Int(columnX, groundHeight + 1, columnZ), settings);

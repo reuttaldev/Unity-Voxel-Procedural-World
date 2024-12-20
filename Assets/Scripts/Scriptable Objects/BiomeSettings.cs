@@ -23,9 +23,7 @@ public class BiomeSettings : ScriptableObject
     private float waterScale = 0.3f; // how much % out of the chunk height should be with water
     [field: SerializeField]
     private float stoneProb = 0.3f; // likelihood of a chunk's column being stone
-    [HideInInspector]
     public float waterThreshold { get; private set;}
-    [field: SerializeField]
     public float stoneThreshold { get; private set; }
     [field: SerializeField]
     public VoxelType topVoxel { get; private set; }

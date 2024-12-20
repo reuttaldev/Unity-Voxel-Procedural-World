@@ -207,9 +207,9 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
             return chunks[chunkPos][voxelLocalPos];
         }
         // check if the position is at the end of the currently existing world.
-        // if it is, then there is not reason to render it since a new chunk will be generated there sometime.
-        // this avoids rendering the chunks (that are procedurally generated) walls 
-        return VoxelType.Light_Grass  ;
+        // if it is not, then there is not reason to render it since a new chunk will be generated there sometime.
+        // this avoids rendering the chunk's (that are procedurally generated) walls 
+        return VoxelType.DontRenderNeighbors;
     }
     /// <summary>
     /// return the elements from l that are not found in our chunk dictionary, order by distance (so we render the chunks that are closest to the player first). 

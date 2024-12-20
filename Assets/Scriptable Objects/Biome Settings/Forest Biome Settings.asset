@@ -15,13 +15,13 @@ MonoBehaviour:
   <noise>k__BackingField: {fileID: 11400000, guid: ccf76e44ea74dff4da79ac50b141aa1e, type: 2}
   <secondaryNoise>k__BackingField: {fileID: 11400000, guid: eecc86db872892c4386be535614da045, type: 2}
   <treeNoise>k__BackingField: {fileID: 11400000, guid: 8f162576ec870d64cb32143b14fbfd5c, type: 2}
-  waterScale: 0.1
+  waterScale: 0.01
   stoneProb: 0.2
-  <stoneThreshold>k__BackingField: 60
+  <stoneThreshold>k__BackingField: 24
   <topVoxel>k__BackingField: 0
   <waterVoxel>k__BackingField: 17
   <underWaterVoxel>k__BackingField: 16
-  <nearWaterVoxel>k__BackingField: 2
+  <nearWaterVoxel>k__BackingField: 16
   <stoneVoxel>k__BackingField: 15
   treeThreshold: 10
   maxTrunkHeight: 7

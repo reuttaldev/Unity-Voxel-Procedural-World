@@ -131,6 +131,7 @@ public class PlayerController : MonoBehaviour
                 audioSource.PlayOneShot(stoneFootsteps);
                 break;
             case VoxelType.Water:
+            case VoxelType.Dark_Water:
                 audioSource.PlayOneShot(waterFootStep);
                 break;
         }

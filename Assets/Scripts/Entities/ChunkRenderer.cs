@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 /// This class is in charge of combining a group of voxels into one mesh that will be rendered optimally (only the outer faces of the cubes will be created, not the ones that are overlapping).
 [RequireComponent(typeof(MeshCollider))]
@@ -29,15 +30,49 @@ public class ChunkRenderer : MonoBehaviour
         collisionMesh = new CollisionMesh();
         waterMesh = new WaterMesh();
     }
+    /// <summary>
+    /// Checks if there is a voxel against the specified face. 
+    /// If a voxel is present, there is no need to draw the face, 
+    /// </summary>
+    /// <returns>True if a voxel is present against the face; otherwise, false.</returns>
+    private VoxelType GetFaceNeighborType(Vector3Int relativePos, int faceIndex)
+    {
+        // don't render the bottom of a chunk- i.e. faces at y= 0 that are facing the bottom. No one is ever going to see those
+        if (relativePos.y == 0 && faceIndex == 3)
+            return VoxelType.DontRenderNeighbors;
+        // offset the position of the voxel we want to check by a value that corresponds to the face parallel to it. 
+        Vector3Int posToCheck = relativePos + EnvironmentConstants.faceChecks[faceIndex];
+        VoxelType type;
+        if (ChunkUtility.ValidLocalVoxelCoordinates(posToCheck))
+        {
+            // if a voxel exists at this new position, the two voxels are touching.
+            type = data[posToCheck];
+        }
+        // meaning the voxel that requires checking is not in this specific chunk
+        // and we need to get info about a chunk that is not related to this render instance. 
+        // refer to Chunk Controller to get this info
+        else
+        {
+            // access the chunk the voxel is in 
+            // add the game object transform to make the voxel poisiton global
+            type = ChunkContoller.Instance.GetVoxelTypeByGlobalPos(posToCheck + chunkPos.ToWorldPosition());
+        }
+        return type;
+    }
 
+    private bool IsNeighborFaceSolid(Vector3Int pos, int face)
+    {
+        VoxelType faceNeightborType = GetFaceNeighborType(pos, face);
+        // need to render voxels that are against air or under water 
+        return faceNeightborType != VoxelType.Water && faceNeightborType != VoxelType.Dark_Water 
+            && faceNeightborType != VoxelType.Empty;
+    }
     private void GenerateVoxelMeshData(Vector3Int relativePos,VoxelType type)
     {
         VoxelData v = ChunkContoller.Instance.voxelsTextureData.GetVoxelData(type);
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
-            VoxelType faceNeightborType = GetFaceNeighborType(relativePos, face);
-            // need to render voxels that are against air or under water 
-            if (faceNeightborType != VoxelType.Empty && type != VoxelType.Water)
+            if (IsNeighborFaceSolid(relativePos, face))
                 continue;
             for (int faceVertex = 0; faceVertex < EnvironmentConstants.vertexNoDupCount; faceVertex++)
             {
@@ -58,8 +93,8 @@ public class ChunkRenderer : MonoBehaviour
         VoxelData v = ChunkContoller.Instance.voxelsTextureData.GetVoxelData(type);
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
-            // water only needs to be render in the faces that touch air (not against other cube
-            if (GetFaceNeighborType(relativePos, face) != VoxelType.Empty)
+            // water only needs to be render in the faces that touch air (not against other cube)
+            if (GetFaceNeighborType(relativePos, face)!=VoxelType.Empty)
                 continue;
             for (int faceVertex = 0; faceVertex < EnvironmentConstants.vertexNoDupCount; faceVertex++)
             {
@@ -71,33 +106,6 @@ public class ChunkRenderer : MonoBehaviour
             var faceUvs = TextureUtility.GetTexturePositionInAtlas(face, v);
             waterMesh.AddUV(faceUvs);
         }
-    }
-
-    /// <summary>
-    /// Checks if there is a voxel against the specified face. 
-    /// If a voxel is present, there is no need to draw the face, 
-    /// </summary>
-    /// <returns>True if a voxel is present against the face; otherwise, false.</returns>
-    private VoxelType GetFaceNeighborType(Vector3Int relativePos, int faceIndex)
-    {
-        // offset the position of the voxel we want to check by a value that corresponds to the face parallel to it. 
-        Vector3Int posToCheck = relativePos + EnvironmentConstants.faceChecks[faceIndex];
-        VoxelType type;
-        if (ChunkUtility.ValidLocalVoxelCoordinates(posToCheck))
-        {
-            // if a voxel exists at this new position, the two voxels are touching.
-            type = data[posToCheck];
-        }
-        // meaning the voxel that requires checking is not in this specific chunk
-        // and we need to get info about a chunk that is not related to this render instance. 
-        // refer to Chunk Controller to get this info
-        else 
-        {
-            // access the chunk the voxel is in 
-            // add the game object transform to make the voxel poisiton global
-            type = ChunkContoller.Instance.GetVoxelTypeByGlobalPos(posToCheck + chunkPos.ToWorldPosition());
-        }
-        return type;
     }
 
     public void GenerateChunkMeshData(ChunkData data, ChunkPosition pos)

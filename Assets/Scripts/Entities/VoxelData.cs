@@ -25,7 +25,8 @@ public enum VoxelType
     Dark_Rocks,
     Dark_Grass,
     Dark_Water,
-    Empty
+    Empty,
+    DontRenderNeighbors
 }
 
 
