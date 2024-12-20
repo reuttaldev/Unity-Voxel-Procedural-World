@@ -67,10 +67,13 @@ public class CollisionMesh: MeshData
     {
         mesh.SetVertices(vertices);
         mesh.SetUVs(0, uvs);
-        mesh.SetTriangles(triangles,0);
+        mesh.SetTriangles(triangles, layerIndex);
     }
 
 }
+
+// water mesh needs to be different than regular mesh since A. it does not involve a collider and B. it is rendered in addition to another mesh,
+// it is not independent 
 public class WaterMesh: MeshData
 {
     public WaterMesh() : base()
@@ -87,7 +90,6 @@ public class WaterMesh: MeshData
         var v = new List<Vector3>(mesh.vertices);
         int originalVerticesCount = v.Count;
         var u = new List<Vector2>(mesh.uv);
-
         // add to it the current data
         v.AddRange(vertices);
         u.AddRange(uvs);
@@ -97,6 +99,6 @@ public class WaterMesh: MeshData
 
         mesh.SetVertices(v);
         mesh.SetUVs(0,u);
-        mesh.SetTriangles(t, 1);
+        mesh.SetTriangles(t, layerIndex);
     }
 }

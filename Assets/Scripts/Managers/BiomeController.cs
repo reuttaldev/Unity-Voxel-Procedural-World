@@ -55,7 +55,7 @@ public class BiomeController : MonoBehaviour
             {
                 if (y == groundPos +1)
                     return biomeSettings.nearWaterVoxel;
-                return VoxelType.Water;
+                return biomeSettings.waterVoxel;
             }
             else
                 return VoxelType.Empty;

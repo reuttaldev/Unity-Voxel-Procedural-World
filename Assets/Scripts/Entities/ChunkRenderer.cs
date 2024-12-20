@@ -35,7 +35,9 @@ public class ChunkRenderer : MonoBehaviour
         VoxelData v = ChunkContoller.Instance.voxelsTextureData.GetVoxelData(type);
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
-            if (FaceHasNeighbor(relativePos, face))
+            VoxelType faceNeightborType = GetFaceNeighborType(relativePos, face);
+            // need to render voxels that are against air or under water 
+            if (faceNeightborType != VoxelType.Empty && type != VoxelType.Water)
                 continue;
             for (int faceVertex = 0; faceVertex < EnvironmentConstants.vertexNoDupCount; faceVertex++)
             {
@@ -51,8 +53,9 @@ public class ChunkRenderer : MonoBehaviour
         }
     }
 
-    private void GenerateWaterMeshData(Vector3Int relativePos)
+    private void GenerateWaterMeshData(Vector3Int relativePos, VoxelType type)
     {
+        VoxelData v = ChunkContoller.Instance.voxelsTextureData.GetVoxelData(type);
         for (int face = 0; face < EnvironmentConstants.facesCount; face++)
         {
             // water only needs to be render in the faces that touch air (not against other cube
@@ -65,7 +68,8 @@ public class ChunkRenderer : MonoBehaviour
                 waterMesh.AddVertices(vertexInFace + relativePos);
             }
             waterMesh.AddTriangles();
-            //waterMesh.AddUV(TextureUtility.GetUvsForAtlas(face));
+            var faceUvs = TextureUtility.GetTexturePositionInAtlas(face, v);
+            waterMesh.AddUV(faceUvs);
         }
     }
 
@@ -95,13 +99,6 @@ public class ChunkRenderer : MonoBehaviour
         }
         return type;
     }
-    private bool FaceHasNeighbor(Vector3Int relativePos, int faceIndex)
-    {
-        VoxelType type = GetFaceNeighborType(relativePos,faceIndex);
-        // need to render (ground) voxels under water as well 
-        return type != VoxelType.Empty && type != VoxelType.Water;
-
-    }
 
     public void GenerateChunkMeshData(ChunkData data, ChunkPosition pos)
     {
@@ -116,7 +113,8 @@ public class ChunkRenderer : MonoBehaviour
                 case VoxelType.Empty:
                     continue;
                 case VoxelType.Water:
-                    //GenerateWaterMeshData(kvp.Key);
+                case VoxelType.Dark_Water:
+                    GenerateWaterMeshData(kvp.Key, kvp.Value);
                     break;
                 default:
                     GenerateVoxelMeshData(kvp.Key,kvp.Value);
