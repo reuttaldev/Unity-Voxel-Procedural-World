@@ -26,7 +26,17 @@ The graphical assets that are used in the game are from free online resources.
 
 The most essential scripts, that determine the game’s functionality, are described below. 
 
-- Player Controller
+### Player Controller
+'PlayerController' script enables the player's movement, facilitating the exploration of the environment. It is the most important step in making the game interactable. 
+It works by first reading the user's input from 'InputActionReference'- a type provided by Unity's new input system to map button presses to values and callbacks.
+The WASD keys input values are read in a special method called 'FixedUpdate', which simulates a loop that is called every frame in a fixed time interval. When the x or y input value is greater than 0, movement is created using a physics component called [RigidBody2D](https://docs.unity3d.com/6000.0/Documentation/Manual/2d-physics/rigidbody/introduction-to-rigidbody-2d.html). The forward direction is calculated- '''moveDirection = transform.right * input.x + transform.forward * input.y;''' and applied by adding force to the physics component in the magnitude of '''moveDirection.normalized * moveSpeed * accelerationMultiplier'''. 
+ Unfortunately, applying force can cause the player move at a speed that exceed the intended one. Therefore, 'ControlSpeed' method keeps the linear velocity in check.  
+The jumping functionality is implemented by applying a force in the y-direction only during button event callback triggers. Before jumping, I check that the player is not already in air using '''Physics.CheckSphere(raycastPosition.position, playerRadius,GroundLayers, QueryTriggerInteraction.Ignore);'''.
+
+Additionally, a 'drag' is applied to the player's movement to prevent the appearance of gliding across the floor without friction. This was necessary because I had to use a zero-friction material in the collision component to ensure the player wouldn't get stuck against the walls of the voxels when jumping on the terrain.
+
+The rotation of the player (and therefore the direction in which the player needs to move) is calculated based on the camera position. The script that controls it is described below. 
+
 - Camera Controller
 - Endless Environment Controller
 - Chunk Controller
