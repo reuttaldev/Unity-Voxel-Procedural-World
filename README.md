@@ -78,12 +78,7 @@ Next, each voxel type inside the chunk needs to be determined. For each one of t
  After mesh data is calculated, it can be rendered. In Unity, rendering must be done on the main thread. To avoid blocking performance by rendering all chunks at once—an issue that could hinder operations like moving the player and cause SPF drops —chunk rendering is spread out over fixed time intervals. Positions of chunks that have had their mesh calculated are added to a `ConcurrentQueue<ChunkPosition>` (it will become clear why the queue is concurrent in the next section). In the `Update` loop, elements are dequeued and rendered on the main thread - once per time interval (or frame). 
 
 Additionally, `ChunkController` provides methods for adding trees: `AddTreesData`, `AddTreeTrunk`, `AddTreeLeafs`. These are called if, in a certain column, the "include tree" probability surpassed those provided in `BiomeSetting`. The probability is calculated as a noise rather than a random number because a random (even with a seed) might not give us the same number when we need it to produce a consistent environment. That's because we don't know if we will get to this part of the code at exactly the same point in different machines- some run faster than others. However, the noise will always give us the same value for the same offset settings. The tree's trunk height is decided as follows: `(int)(noiseVal * biomeSettings.maxTrunkHeight);`. The radius of the leaves is  `localTrunkPos.x % 2 ==0 ? 1 : 2;`.
-
-To summarize, the sequence of operations for creating the world from start to finish is as follows:
-1) Instantiate (or use from an existing pool) chunk GameObbjects. This must be done on the main thread since we are changing GameObbjects properties. 
-2) Decide `VoxelTypes` for every voxel in every chunk by filling the values of `ChunkData` for each object in `BiomeController`.
-3) Generate mesh data for every chunk i.e. which voxel faces need to be visible and with what texture. Must be done after generating all `ChunkData` due to adjacent voxel checks.
-4) Rendering. Can be done as soon as some mesh has finished calculating. Again, this must be done on the main thread.
+Tree data must be generated after the chunks data, since some elements of a tree can be split between chunks when it is on the wall of a chunk (trunk is in chunk A, some leafs enter chunk B).
 
 ### Endless Environment Controller
 This script controls the procedural generation aspect of the game. It connects all scripts we described above to work in tandem and create the expected logic. It also defines the multi-threading logic. 
@@ -94,23 +89,37 @@ There are 3 computationally and resource-expensive tasks:
 2. Generating the mesh data for the voxels. This is done by placing vertices and triangles with textures at precise locations for each voxel`s visible face. All chunks must be generated and present before creating the meshes, to allow checks on shared faces (i.e., check if a face needs to be visible or occluded decided by if it has a voxel next to it, and which type).
  3. rendering the voxel. I use a texture atlas which is all the texture stitched into one image. This is so the renderer does not have to switch textures when rendering different blocks.
 
-The data below showcases the performance of the game when using different threading architectures. The metrics are for generating re for generating 100 chunks, each with a width and depth of 15, and height of 60	.
+The data below showcases the performance of the game when using different threading architectures. The metrics are for generating  100 chunks, each with a width and depth of 15, and height of 60. 
+<!-- The images are imported from Unity's profiler. -->
 
-![Single Thread](images/main_thread_performance.png)
+<!-- ![Single Thread](images/main_thread_performance.png)
 
 Using a single-thread implementation (everything is on the main thread):
 When generating and rendering a new environment, we experience a significant SPF loss reaching less than 15 SPF. Obviously, the main thread is getting blocked by my voxel engine code. 
 Generation took: ~3225 ms
 
 
-![Multi Thread_Sequential](images/Sequential_multithreading_performance.png)
-Using sequential multithreading (executing major task on a separate thread, and awaiting each one before starting the next) Generate chunk data ->  generate mesh data -> render. Generation took: 7385 ms
-We can see that the main thread is no longer getting blocked (we are still above 60FPS), but the generation time is very long (since each tasks waits for the last one to finish).
+<!-- ![Multi Thread_Sequential](images/Sequential_multithreading_performance.png)-->
+Using sequential multithreading (executing major tasks on a separate thread, and awaiting each one before starting the next) Generate chunk data ->  generate mesh data -> render. Generation took: ~6000 ms
+We can see that the main thread is no longer getting blocked (we are still above 60FPS), but the generation time is very long (since each task waits for the last one to finish).
 
+<!-- ![Multi Thread_Sequential](images/parallel_multithreading_performance.png)-->
 Using (partially) parallel multithreading and object pooling: 
-The renderer gets to work as soon as some mesh data is available. 
+The renderer gets to work as soon as some mesh data is available. Generation took: ~3000 ms. No FPS drops were shown. 
+
+The last approach gives us the best approach. 
+
+To ensure the correct behavior of the game regardless of the number of threads being used, each task is given a `CancellationTokenSource` as an argument. It is canceled and disposed of on the `OnDisable` method of the `EndlessEnvController` GameObject. This is to ensure that when the game is stopped- no threads continue to run in the background.
 
 Regarding the procedurally generated aspect of the game: The initial world is generated with the player positioned at its center. When the player leaves their current chunk, the UpdateWorld function is triggered. This function determines which chunks currently surround the player, using ChunkUtility.GetChunkPositionsAroundPos to calculate these positions, starting from the closest chunk and moving outward. It also identifies chunks that are no longer near the player. Based on this information, chunks are created and destroyed following the process previously explained.
+The environment will look different in different positions since the noise values are based on the global position of the chunks. 
+
+To summarize, the sequence of operations for creating the world from start to finish is as follows:
+1) Instantiate (or use from an existing pool) chunk GameObbjects. This must be done on the main thread since we are changing GameObbjects properties. 
+2) Decide `VoxelTypes` for every voxel in every chunk by filling the values of `ChunkData` for each object in `BiomeController`.
+3) Generate mesh data for every chunk i.e. which voxel faces need to be visible and with what texture. This must be done after generating all `ChunkData` due to adjacent voxel checks.
+4) Rendering. Can be done as soon as some mesh has finished calculating. Again, this must be done on the main thread.
+5) Repeat based on the player's position.
 
 ### Player Controller
 `PlayerController` script enables the player's movement, facilitating the exploration of the environment. It is the most important step in making the game interactable. 
@@ -128,3 +137,6 @@ The rotation of the player (and therefore the direction in which the player need
 
 The horizontal input simply rotates the player around its own y-axis. This will cause changes to the camera view since I am utilizing Cinemachine's follow functionality. The vertical input controls an object that signifies the player's eyes only, without changing the placement of the player itself. The input gets added to the current vertical position, clamped to +90 and -90 to ensure the correct view of the world. 
 
+### Script Comunication
+
+Most script referencing happens using direct references in the editor. Additionally, I added a a generic class `SimpleSingleton<T>: MonoBehaviour where T: MonoBehaviour` to access instances at runtime without having to set up a references.
