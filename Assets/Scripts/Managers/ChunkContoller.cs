@@ -7,6 +7,7 @@ using System.Threading;
 using System.Xml.Serialization;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 public class ChunkContoller : SimpleSingleton<ChunkContoller>
@@ -106,17 +107,17 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     /// </summary>
     public void GenerateChunkMeshData(ChunkPosition pos)
     {
-        if (!chunks.ContainsKey(pos))
+        /*if (!chunks.ContainsKey(pos))
         {
             Debug.LogError("Trying to render mesh data without initializing chunk data first.");
             return;
-        }
+        }*/
         var renderer = chunks[pos].renderer;
-        if (renderer == null)
+        /*if (renderer == null)
         {
             Debug.LogError("Trying to generate mesh data without initializing chunk Game Object first.");
             return;
-        }
+        }*/
         renderer.GenerateChunkMeshData(chunks[pos], pos);
         positionsToBeRendered.Enqueue(pos);
     }
@@ -163,7 +164,7 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
             else // the voxel that requires checking is not in this specific chunk
             {
                 // access the chunk the voxel is in 
-                SetVoxelTypeByGlobalPos(localPos + chunkPos.ToWorldPosition(),data.leafType);
+                SetVoxelTypeByGlobalPos(localPos + chunkPos.ToWorldPosition(),data.leafType,false);
             }
         }
     }
@@ -230,18 +231,39 @@ public class ChunkContoller : SimpleSingleton<ChunkContoller>
     #endregion
 
     #region SET METHODS
-    public bool SetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos, VoxelType type)
+    public bool SetVoxelTypeByGlobalPos(Vector3 voxelGlobalPos, VoxelType type, bool renderChanges)
     {
         // get the position of the chunk that contains this voxel
         var chunkPos = new ChunkPosition(voxelGlobalPos);
         // check if this chunk is in our environment 
-        if (chunks.ContainsKey(chunkPos))
+        if (!chunks.ContainsKey(chunkPos))
         {
-            var voxelLocalPos = ChunkUtility.GlobalVoxelPositionToLocal(chunkPos, voxelGlobalPos);
-            chunks[chunkPos][voxelLocalPos] = type;
-            return true;
+            Debug.Log("Could not find chunk with position " + chunkPos);
+            return false;
         }
-        return false;
+
+        var voxelLocalPos = ChunkUtility.GlobalVoxelPositionToLocal(chunkPos, voxelGlobalPos);
+        chunks[chunkPos][voxelLocalPos] = type;
+
+        if(renderChanges)
+        {
+            // update the chunk the changed voxel is in
+            GenerateChunkMeshData(chunkPos);
+            // check if the updates voxel shares a face with another chunk.
+            for (int faceIndex = 0; faceIndex < EnvironmentConstants.facesCount; faceIndex++)
+            {
+                var face = EnvironmentConstants.faceChecks[faceIndex];
+                Vector3Int posToCheck = voxelLocalPos + face;
+                // if so, we need to update those chunks as well
+                if (!ChunkUtility.ValidLocalVoxelCoordinates(posToCheck))
+                {
+                    ChunkPosition sharedFaceChunkPos = ChunkUtility.ContainingChunkPosFromGlobal(voxelGlobalPos +  face);
+                    GenerateChunkMeshData(sharedFaceChunkPos);
+                }
+
+            }
+        }
+        return true;
     }
     #endregion
 }

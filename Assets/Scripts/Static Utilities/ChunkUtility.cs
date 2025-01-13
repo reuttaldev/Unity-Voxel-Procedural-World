@@ -16,12 +16,18 @@ public static class ChunkUtility
             z = Mathf.FloorToInt(globalVoxelPos.z - chunkWorldPos.z)
         };
     }
+    public static ChunkPosition ContainingChunkPosFromGlobal(Vector3 globalVoxelPos)
+    {
+        return new ChunkPosition(Mathf.FloorToInt(globalVoxelPos.x / EnvironmentConstants.chunkWidth),
+            Mathf.FloorToInt(globalVoxelPos.z / EnvironmentConstants.chunkDepth));
+    }
     public static bool ValidLocalVoxelCoordinates(Vector3 coordinates)
     {
         if (coordinates.x < 0 || coordinates.x >= EnvironmentConstants.chunkWidth || coordinates.z < 0 || coordinates.z >= EnvironmentConstants.chunkWidth || coordinates.y < 0 || coordinates.y >= EnvironmentConstants.chunkHeight)
             return false;
         return true;
     }
+
 
     /// <summary>
     /// Returns a list of chunk positions that are surrounding the given pos

@@ -31,8 +31,7 @@ public class BiomeController : MonoBehaviour
         float secondaryNoise = NoiseUtility.GetNoise(globalColumnPos, settings.secondaryNoise);
         // equivalent to setting a prob p for a column being store (threshold), generating random num (noise), if it is greater than make it stone 
         bool isStone = secondaryNoise > settings.stoneThreshold;
-        //if (isStone)
-            //Debug.Log("stone" + secondaryNoise);
+
         bool columnContainsWater = false;
         for (int y = 0; y < EnvironmentConstants.chunkHeight; y++)
         {
@@ -52,7 +51,6 @@ public class BiomeController : MonoBehaviour
         {
             // now, check if this column should contain a tree
             float treeNoise = NoiseUtility.GetNoise(globalColumnPos, settings.treeNoise);
-            Debug.Log(treeNoise);
             if (treeNoise > settings.treeThreshold)
             {
                 chunk.AddTreeData(DecideTreeType(treeNoise, new Vector3Int(columnX, groundHeight + 1, columnZ), settings));

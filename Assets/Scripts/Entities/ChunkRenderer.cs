@@ -16,7 +16,8 @@ public class ChunkRenderer : MonoBehaviour
     private MeshCollider meshCollider;
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
-    private ChunkPosition chunkPos; 
+    private ChunkPosition chunkPos;
+    private bool cleared = true;
 
 #if UNITY_EDITOR
     [SerializeField]
@@ -110,6 +111,9 @@ public class ChunkRenderer : MonoBehaviour
 
     public void GenerateChunkMeshData(ChunkData data, ChunkPosition pos)
     {
+        if(!cleared)
+            ClearLastGeneration();
+
         // init the class with the given data. These may change at every generation
         this.data = data;
         this.chunkPos = pos;    
@@ -135,7 +139,8 @@ public class ChunkRenderer : MonoBehaviour
     {
         collisionMesh.Clear();
         waterMesh.Clear();
-        meshFilter.mesh = null; 
+        meshFilter.mesh = null;
+        cleared = true;
     }
 
     /// <summary>

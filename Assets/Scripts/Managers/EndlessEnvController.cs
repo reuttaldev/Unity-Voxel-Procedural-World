@@ -61,7 +61,6 @@ public class EndlessEnvController : MonoBehaviour
         await GenerateWorldData(poses);
         //Step 3: Generate the chunk mesh data: i.e. which voxel faces need to be visible and with what texture.
         // must be done after generating the game objects since the renderer is a component of the game object.
-        // need to change this- so it can be done in parallel 
         var meshGeneration= GenerateWorldMeshData(poses);
 
         /// Step 4: Render the chunk based on the chunk mesh data that was calculated previously.

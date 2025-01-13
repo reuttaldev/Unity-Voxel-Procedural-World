@@ -37,7 +37,10 @@ public class SimpleSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         if (instance == null)
         {
-            instance = gameObject.GetComponent<T>();
+            lock (padlock)
+            {
+                instance = gameObject.GetComponent<T>();
+            }
         }
         else if(instance!=this)
         {

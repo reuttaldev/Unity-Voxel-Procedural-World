@@ -29,7 +29,6 @@ public class PlayerController : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         rb = gameObject.GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
-        UnityEngine.Cursor.visible = false;
     }
     private void OnEnable()
     {

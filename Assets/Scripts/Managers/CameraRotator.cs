@@ -7,18 +7,23 @@ public class CameraRotator : MonoBehaviour
     [SerializeField]
     private float mouseSensitivity = 1, clamp = 90, rotationThreshold = 0.01f;
     [SerializeField]
-    Transform target, player;
+    private Transform target, player;
     [SerializeField]
-    InputActionReference lookAction;
+    private InputActionReference lookAction;
 
     private float yRotation, xRotation;
     private Vector3 input;
 
+    private void Start()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+    }
     private void Update()
     {
         input = lookAction.action.ReadValue<Vector2>();
     }
-    void LateUpdate()
+    private void LateUpdate()
     {
 
         if (input.sqrMagnitude > rotationThreshold)
