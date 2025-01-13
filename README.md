@@ -29,7 +29,7 @@ The most essential scripts, that determine the game’s functionality, are descr
 ### Chunk Data
 Each chunk is constructed from voxels arranged in the 3D space, and chunks are stacked together to form the full world. `ChunkData` is an entity class that represents a collection of voxels. They are stored as a dictionary, where the key is the local position of a voxel within the chunk, and the value is an enum called `VoxelType`. The `VoxelType` determines whether a voxel at position (x,y) will show a texture of grass, grass, water, etc. I provide an indexer method to conveniently access a voxel's type using Vector3Int coordinates.
 
-It also holds a reference to a 'ChunkRenderer' instance, that is described below. 
+It also holds a reference to a 'ChunkRenderer' instance, which is described below. 
 ### Chunk Renderer 
 
 In a voxel engine, the world is built using groups of voxels called chunks instead of treating individual voxels as building blocks. This approach is clever because it allows multiple objects to be rendered in the same GPU call,  which offers better optimization compared to drawing each cube individually. Additionally, the mesh is optimized by generating faces only for the parts visible to the player. Faces of adjacent voxels that touch each other are not generated, which further reduces GPU usage significantly.
@@ -60,54 +60,57 @@ The columns of the chunk are filled out in the following manner:
 4) Call `DecideVoxelTypeByY` given a y position and the maximum visible height position of the column. The texture below the max height will be determined based on the `BiomeSettings` texture values. The values above it will either be air or water- based on `BiomeSettings` water threshold.
 5) Generate a third noise to determine whether this column should include a tree, and which type. If it is higher than a threshold specified in the settings, call `AddTreeData`. This will add a tree type to a list that will be generated and rendered once the chunks are all visible.  
 
-Each generated noise is generated in a static class called `NoiseUtility`. The type of noise that is used is Octave Perlin- where  multiple layers of Perlin noise are layered to create natural patterns and textures. The settings of each calculated noise are different, to avoid unwanted correlations such as trees only being generated at high spots. The settings include seed to ensure consistent generation, octave values, amplitude multiplier, and smoothness.
+Each generated noise is generated in a static class called `NoiseUtility`. The type of noise that is used is Octave Perlin- where  multiple layers of Perlin noise are layered to create natural patterns and textures. The settings of each calculated noise are different, to avoid unwanted correlations such as trees only being generated at high spots. The settings include seed to ensure consistent generation, octaves amount, amplitude multiplier (contribution of each octave to the final noise), and smoothness (scale of the noise).
 
 
-Disclaimer: The functionality is fully implemented, but the different environments are not set in the game yet. Only the forest environment is present. 
+Disclaimer: The functionality is fully implemented, but the different environments are not set in the game yet. Only the forest environment is present- others are left for future work. 
 ### Chunk Controller
 
-Script `ChunkContoller` takes care of instantiating, deleting, and controlling individual components of the chunks e.g. the renderer. 
+Script `ChunkContoller` takes care of instantiating, deleting, and controlling individual components of the chunks. 
 
-Instantiating a chunk involves creating a GameObject (Unity's most basic type, which can represent anything) and attaching it with a  fresh `ChunkData` instance. The chunk gets added to a dictionary where the key is the `ChunkPosition` and the value is the `ChunkData`. 
-
-Next, each voxel type inside the chunk needs to be determined. For each one of the 15x15x15 inner positions, the `VoxelType` is decided in a method called `GenerateChunkData`. This process will be detailed in the "Biome Controller" section. 
-
-After each voxel is assigned a type, it is time to generate the mesh data to transform the chunk from a collection of data into something visible on the player's screen. The chunk GameObject is also attached with a `ChunkRenderer` instance. This class is in charge of combining a group of voxels into one mesh that will be generated optimally (only the outer faces of the voxels will be created, not the ones that are overlapping). `ChunkContoller`  calls `renderer.GenerateChunkMeshData` for each chunk in its list.
-
+Instantiating a chunk involves creating a GameObject (Unity's most basic type, which can represent anything) and attaching it with a fresh `ChunkRenderer` instance. The chunk gets added to a dictionary where the key is the `ChunkPosition` and the value is the `ChunkData`. 
 For better performance, we use a pool of chunk objects that are filled with data when needed and cleared when no longer in use before being returned to the pool. This approach avoids the overhead of repeatedly instantiating and destroying GameObjects.
 
+Next, each voxel type inside the chunk needs to be determined. For each one of the 15x15x15 inner positions, the `VoxelType` is decided in a method called `GenerateChunkData`. This process triggers the column-filling process detailed in the "Biome Controller" section. 
+
+ `ChunkContoller`  calls `renderer.GenerateChunkMeshData` for each chunk in its list when it is time to generate the mesh data to transform the chunk from a collection of data into something visible on the player's screen. This step can only be done after the `ChunkData` for all objects has been done. That is because in the renderer when generating mesh data, we perform checks of adjacent voxels to check if they are solid. Sometimes, the adjacent voxels are outside of the local position and exist within a different chunk. This script will be called in order to obtain information about it. If its data is not yet filled out the renderer does not know if to include vertices for this voxel and the process is "blocked".  
+
+ After mesh data is calculated, it can be rendered. In Unity, rendering must be done on the main thread. To avoid blocking performance by rendering all chunks at once—an issue that could hinder operations like moving the player and cause SPF drops —chunk rendering is spread out over fixed time intervals. Positions of chunks that have had their mesh calculated are added to a `ConcurrentQueue<ChunkPosition>` (it will become clear why the queue is concurrent in the next section). In the `Update` loop, elements are dequeued and rendered on the main thread - once per time interval (or frame). 
+
+Additionally, `ChunkController` provides methods for adding trees: `AddTreesData`, `AddTreeTrunk`, `AddTreeLeafs`. These are called if, in a certain column, the "include tree" probability surpassed those provided in `BiomeSetting`. The probability is calculated as a noise rather than a random number because a random (even with a seed) might not give us the same number when we need it to produce a consistent environment. That's because we don't know if we will get to this part of the code at exactly the same point in different machines- some run faster than others. However, the noise will always give us the same value for the same offset settings. The tree's trunk height is decided as follows: `(int)(noiseVal * biomeSettings.maxTrunkHeight);`. The radius of the leaves is  `localTrunkPos.x % 2 ==0 ? 1 : 2;`.
+
+To summarize, the sequence of operations for creating the world from start to finish is as follows:
+1) Instantiate (or use from an existing pool) chunk GameObbjects. This must be done on the main thread since we are changing GameObbjects properties. 
+2) Decide `VoxelTypes` for every voxel in every chunk by filling the values of `ChunkData` for each object in `BiomeController`.
+3) Generate mesh data for every chunk i.e. which voxel faces need to be visible and with what texture. Must be done after generating all `ChunkData` due to adjacent voxel checks.
+4) Rendering. Can be done as soon as some mesh has finished calculating. Again, this must be done on the main thread.
 
 ### Endless Environment Controller
-This script controls the procedural generation aspect of the game. It connects all scipts we described above to work in tandem and create the expected logic.
-
-In charge of placing chunks in the world and the order of operations in which the methods on them is controlled, as well as multi-threading logic. 
-Controls the placement of the chunks. 
+This script controls the procedural generation aspect of the game. It connects all scripts we described above to work in tandem and create the expected logic. It also defines the multi-threading logic. 
 
 There are 3 computationally and resource-expensive tasks: 
 
 1. Setting up the voxel data, i.e. which type of voxel should be and where. 
-2. Generating the mesh data for the voxels. This is done by placing vertices and triangles with textures at precise locations for each voxel`s visible face. All chunks must be generated and present before creating the meshes, to allow checks on shared faces (i.e., check if a face needs to be visible or occluded decided by if it has a voxel next to it, and which type.) Therefore, communications between chunks if an important part of the system, and it is done in ChunkController.
+2. Generating the mesh data for the voxels. This is done by placing vertices and triangles with textures at precise locations for each voxel`s visible face. All chunks must be generated and present before creating the meshes, to allow checks on shared faces (i.e., check if a face needs to be visible or occluded decided by if it has a voxel next to it, and which type).
  3. rendering the voxel. I use a texture atlas which is all the texture stitched into one image. This is so the renderer does not have to switch textures when rendering different blocks.
-The metrics shown below are for generating 100 chunks, each with a width and depth of 15, and height of 60	
 
-The data below showcases the performance of the game when using different threading architectures. 
+The data below showcases the performance of the game when using different threading architectures. The metrics are for generating re for generating 100 chunks, each with a width and depth of 15, and height of 60	.
 
-Using a single-thread implementation (everything is on the main thread)
-When generating and rendering a new environment, we experience a significant SPF loss of less than 15 SPF. Obviously, the main thread is getting blocked by my voxel engine code. 
+![Single Thread](images/main_thread_performance.png)
+
+Using a single-thread implementation (everything is on the main thread):
+When generating and rendering a new environment, we experience a significant SPF loss reaching less than 15 SPF. Obviously, the main thread is getting blocked by my voxel engine code. 
 Generation took: ~3225 ms
 
 
-Sequential multithreading (executing major task on a separate thread, and awaiting each one before starting the next) Generate chunk data ->  generate mesh data -> render 
-
-
-
-
-Generation took: 7385 ms
+![Multi Thread_Sequential](images/Sequential_multithreading_performance.png)
+Using sequential multithreading (executing major task on a separate thread, and awaiting each one before starting the next) Generate chunk data ->  generate mesh data -> render. Generation took: 7385 ms
 We can see that the main thread is no longer getting blocked (we are still above 60FPS), but the generation time is very long (since each tasks waits for the last one to finish).
 
+Using (partially) parallel multithreading and object pooling: 
+The renderer gets to work as soon as some mesh data is available. 
 
-Parallel multithreading and object pooling : 
-Mesh generation begins as soon as voxel data is ready for a chunk, rather than waiting for all voxel data to finish across all chunks. Similarly, the renderer gets to work as soon as some mesh data is available. 
+Regarding the procedurally generated aspect of the game: The initial world is generated with the player positioned at its center. When the player leaves their current chunk, the UpdateWorld function is triggered. This function determines which chunks currently surround the player, using ChunkUtility.GetChunkPositionsAroundPos to calculate these positions, starting from the closest chunk and moving outward. It also identifies chunks that are no longer near the player. Based on this information, chunks are created and destroyed following the process previously explained.
 
 ### Player Controller
 `PlayerController` script enables the player's movement, facilitating the exploration of the environment. It is the most important step in making the game interactable. 
