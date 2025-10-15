@@ -1,9 +1,20 @@
-In this project, I present a procedurally generated environment that is accomplished using a custom voxel engine made in Unity.
+## Introduction 
+In this project, I present a procedurally generated environment created using a custom voxel engine developed in Unity.
+
+A voxel is an object that resembles a cube in appearance and is considered the 3D equivalent of a pixel.  A voxel engine uses these objects by stacking them and only rendering the faces that are visible to the user. Any environment can be created by utilizing differently sized and textured voxels. The most popular example of a game that thrives on this idea is Minecraft.
+
+In this project, I attempt to create my own version of that to understand the mechanics that work behind the scenes, as well as experiment with multi-threading to streamline the steps of creating and rendering the different voxels in a timely manner. Initially, a small environment is initialized. As the player moves through the scene, new parts will be generated procedurally.
+
+This project was developed in C\# using the Unity engine. It was chosen since it is a well-known and reliable game development tool. The Unity editor has numerous versions; the one used in this game is the newest long-term support release - 6000.0.31f1.
+
+The graphical assets used in the game are from free online resources.
 
 ## Download Link
-To access the Windows, Mac, or Linux build please follow this link [https://lrtal.itch.io/procedurally-generated-voxel-world](https://lrtal.itch.io/procedurally-generated-voxel-world). Download, unzip, and run the executable file.
-On Mac, there may be a permission issue since I am not a known publisher. Please try running this command  in the .app containing folder: 
-chmod -R +x VoxelWorldProject.app (This is a known Mac-specific [problem](https://discussions.unity.com/t/mac-unity-build-from-a-pc-not-opening-on-mac/803627) with Unity builds. If the command does not work, please contact reutgaming@gmail.com for further assistance.)
+To access the Windows build, please follow this [link](https://drive.google.com/file/d/1lTSAFX2eGrthADN9FueT8SehVF7bpJg2/view?usp=sharing). Download, unzip, and run the executable file. Please contact reutgaming@gmail.com for further assistance or a platform-specific build.
+
+## Game snippet
+
+[![Watch the demo on Google Drive]([https://drive.google.com/thumbnail?id=14-7tpvtfEaERYlkVXgFeJ7rBPNc9F_nH&sz=w1200](https://drive.google.com/thumbnail?id=1RK0gKHngU24wfmNKiSPv7jQX3q54R_G-&sz=w1280-h720)]([https://drive.google.com/file/d/14-7tpvtfEaERYlkVXgFeJ7rBPNc9F_nH/view](https://drive.google.com/file/d/1RK0gKHngU24wfmNKiSPv7jQX3q54R_G-/view?usp=sharing))
 
 ## Controls
 
@@ -11,16 +22,6 @@ chmod -R +x VoxelWorldProject.app (This is a known Mac-specific [problem](https:
 - Move the camera using the mouse. 
 - Jump using Space. 
 - Exit the game by pressing ESC for 3 seconds.
-
-## Project Specification
-
-A voxel is an object that resembles a cube in appearance and is considered the 3D equivalent of a pixel.  A voxel engine uses these objects by stacking them and only rendering the faces that are visible to the user. Any environment can be created by utilizing differently sized and textured voxels. The most popular example of a game that thrives on this idea is Minecraft.
-
-In this project, I attempt to create my own version of that to understand the mechanics that work behind the scenes, as well as experiment with multi-threading to streamline the steps of creating and rendering the different voxels in a timely manner. Initially, a small environment is initialized. As the player moves through the scene, new parts will be generated procedurally.
-
-This project was developed in C\# using the Unity engine. It was chosen since it is a well-known and reliable game development tool. The Unity editor has numerous versions, the one used in this game is the newest long-term support release - 6000.0.31f1.
-
-The graphical assets used in the game are from free online resources.
 
 ## Development Documentation
 
