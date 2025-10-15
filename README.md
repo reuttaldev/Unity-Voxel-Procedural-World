@@ -14,8 +14,7 @@ To access the Windows build, please follow this [link](https://drive.google.com/
 
 ## Game snippet
 
-![Video thumbnail](https://drive.google.com/thumbnail?id=1RK0gKHngU24wfmNKiSPv7jQX3q54R_G-&sz=w1280-h720)
-
+![Video thumbnail(https://drive.google.com/thumbnail?id=1RK0gKHngU24wfmNKiSPv7jQX3q54R_G-&sz=w1280-h720)](https://drive.google.com/file/d/1RK0gKHngU24wfmNKiSPv7jQX3q54R_G-/view?usp=sharing)
 
 ## Controls
 
