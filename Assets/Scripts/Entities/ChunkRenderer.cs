@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 /// This class is in charge of combining a group of voxels into one mesh that will be rendered optimally (only the outer faces of the cubes will be created, not the ones that are overlapping).
 [RequireComponent(typeof(MeshCollider))]

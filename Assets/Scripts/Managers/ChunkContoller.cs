@@ -7,8 +7,6 @@ using System.Threading;
 using System.Xml.Serialization;
 using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 public class ChunkContoller : SimpleSingleton<ChunkContoller>
 {

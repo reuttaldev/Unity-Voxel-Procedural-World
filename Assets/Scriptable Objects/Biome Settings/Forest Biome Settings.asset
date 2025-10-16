@@ -16,7 +16,7 @@ MonoBehaviour:
   <secondaryNoise>k__BackingField: {fileID: 11400000, guid: eecc86db872892c4386be535614da045, type: 2}
   <treeNoise>k__BackingField: {fileID: 11400000, guid: 8f162576ec870d64cb32143b14fbfd5c, type: 2}
   waterScale: 0.05
-  stoneProb: 0.100000024
+  stoneProb: 0.1
   <topVoxel>k__BackingField: 0
   <waterVoxel>k__BackingField: 17
   <underWaterVoxel>k__BackingField: 16
